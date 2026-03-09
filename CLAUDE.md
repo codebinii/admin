@@ -22,3 +22,13 @@ php artisan test --filter=TestName   # run single test
 - All routes in `routes/api.php` — automatically prefixed with `/api` and use the `api` middleware group.
 - `routes/console.php` for Artisan commands.
 - Tests use in-memory SQLite — no DB setup needed.
+
+## Development Rules
+
+See [`docs/DEVELOPMENT_RULES.md`](docs/DEVELOPMENT_RULES.md) for mandatory project conventions:
+
+- SOLID principles, modular directory structure, naming conventions
+- No fake data, no auto-testing, no unsolicited features
+- Controllers → Services → Repositories separation
+- Boolean fields normalized with `NormalizesBooleans` trait
+- Commit workflow and session closure procedure
