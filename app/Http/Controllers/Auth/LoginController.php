@@ -26,9 +26,9 @@ final class LoginController extends Controller
                 deviceName: $request->string('device_name', 'api')->toString(),
             );
         } catch (AuthenticationException) {
-            return ApiResponse::unauthorized('Invalid credentials.');
+            return ApiResponse::unauthorized(trans('api.invalid_credentials'));
         }
 
-        return ApiResponse::ok(['token' => $token], 'Login successful.');
+        return ApiResponse::ok(['token' => $token], trans('api.logged_in'));
     }
 }

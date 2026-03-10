@@ -20,7 +20,7 @@ final class StatusController extends Controller
                 'support' => CanalSoporte::where('activo', true)
                     ->get(['canal', 'detalle', 'agente']),
             ],
-            message: 'Server is running.',
+            message: trans('api.server_running'),
         );
     }
 

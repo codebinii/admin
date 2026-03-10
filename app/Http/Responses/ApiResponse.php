@@ -11,49 +11,55 @@ use Illuminate\Pagination\LengthAwarePaginator;
 /**
  * Centralized JSON response builder.
  *
+ * All user-facing strings are resolved from lang/{locale}/api.php
+ * based on APP_LOCALE in .env (default: en).
+ *
  * Success envelope:
  * {
  *   "success": true,
  *   "message": "...",
  *   "data": {...}|[...],
- *   "meta": { "pagination": {...} }   // only when paginated
+ *   "meta": { "pagination": {...} }
  * }
  *
- * Error envelope (RFC 7807 — Problem Details for HTTP APIs):
+ * Error envelope (RFC 7807):
  * {
  *   "success": false,
  *   "status": 422,
- *   "title": "Unprocessable Entity",
+ *   "title": "...",
  *   "detail": "...",
- *   "errors": { "field": ["msg"] }    // only on validation errors
+ *   "errors": { "field": ["msg"] }
  * }
  */
 final class ApiResponse
 {
     // ──────────────────────────────────────────────────────────────────
-    // Success responses
+    // Success
     // ──────────────────────────────────────────────────────────────────
 
-    public static function ok(mixed $data = null, string $message = 'OK'): JsonResponse
+    public static function ok(mixed $data = null, string $message = ''): JsonResponse
     {
-        return self::success($data, $message, 200);
+        return self::success($data, $message ?: self::t('ok'), 200);
     }
 
-    public static function created(mixed $data = null, string $message = 'Resource created successfully.'): JsonResponse
+    public static function created(mixed $data = null, string $message = ''): JsonResponse
     {
-        return self::success($data, $message, 201);
+        return self::success($data, $message ?: self::t('created'), 201);
     }
 
-    public static function noContent(string $message = 'No content.'): JsonResponse
-    {
-        return response()->json(['success' => true, 'message' => $message], 204);
-    }
-
-    public static function paginated(LengthAwarePaginator $paginator, string $message = 'OK'): JsonResponse
+    public static function noContent(string $message = ''): JsonResponse
     {
         return response()->json([
             'success' => true,
-            'message' => $message,
+            'message' => $message ?: self::t('no_content'),
+        ], 204);
+    }
+
+    public static function paginated(LengthAwarePaginator $paginator, string $message = ''): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'message' => $message ?: self::t('ok'),
             'data'    => $paginator->items(),
             'meta'    => [
                 'pagination' => [
@@ -69,41 +75,64 @@ final class ApiResponse
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // Error responses  (RFC 7807)
+    // Errors (RFC 7807)
     // ──────────────────────────────────────────────────────────────────
 
-    public static function badRequest(string $detail = 'Bad request.'): JsonResponse
+    public static function badRequest(string $detail = ''): JsonResponse
     {
-        return self::problem(400, 'Bad Request', $detail);
+        return self::problem(400, 'Bad Request', $detail ?: self::t('bad_request'));
     }
 
-    public static function unauthorized(string $detail = 'Unauthenticated.'): JsonResponse
+    public static function unauthorized(string $detail = ''): JsonResponse
     {
-        return self::problem(401, 'Unauthorized', $detail);
+        return self::problem(401, 'Unauthorized', $detail ?: self::t('unauthorized'));
     }
 
-    public static function forbidden(string $detail = 'This action is unauthorized.'): JsonResponse
+    public static function forbidden(string $detail = ''): JsonResponse
     {
-        return self::problem(403, 'Forbidden', $detail);
+        return self::problem(403, 'Forbidden', $detail ?: self::t('forbidden'));
     }
 
-    public static function notFound(string $detail = 'Resource not found.'): JsonResponse
+    public static function notFound(string $model = ''): JsonResponse
     {
+        $detail = $model
+            ? self::t('not_found', ['model' => $model])
+            : self::t('not_found', ['model' => 'Resource']);
+
         return self::problem(404, 'Not Found', $detail);
     }
 
-    public static function methodNotAllowed(string $detail = 'Method not allowed.'): JsonResponse
+    public static function methodNotAllowed(string $detail = ''): JsonResponse
     {
-        return self::problem(405, 'Method Not Allowed', $detail);
+        return self::problem(405, 'Method Not Allowed', $detail ?: self::t('bad_request'));
+    }
+
+    public static function validationError(array $errors, string $detail = ''): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'status'  => 422,
+            'title'   => 'Unprocessable Entity',
+            'detail'  => $detail ?: self::t('validation_detail'),
+            'errors'  => $errors,
+        ], 422);
+    }
+
+    public static function tooManyRequests(string $detail = ''): JsonResponse
+    {
+        return self::problem(429, 'Too Many Requests', $detail ?: self::t('too_many_requests'));
+    }
+
+    public static function serverError(string $detail = ''): JsonResponse
+    {
+        return self::problem(500, 'Internal Server Error', $detail ?: self::t('server_error'));
     }
 
     public static function routeNotFound(string $path, int $status = 404): JsonResponse
     {
-        $title = $status === 405 ? 'Method Not Allowed' : 'Route Not Found';
-
-        $detail = $status === 405
-            ? "The HTTP method used is not allowed for: {$path}"
-            : "The path '{$path}' does not exist in this API.";
+        [$titleKey, $detailKey] = $status === 405
+            ? ['method_not_allowed_title', 'method_not_allowed_detail']
+            : ['route_not_found_title',    'route_not_found_detail'];
 
         try {
             $support = CanalSoporte::where('activo', true)->get(['canal', 'detalle', 'agente']);
@@ -114,36 +143,15 @@ final class ApiResponse
         return response()->json([
             'success'    => false,
             'status'     => $status,
-            'title'      => $title,
-            'detail'     => $detail,
-            'suggestion' => 'Please verify the endpoint path and HTTP method, or contact our support team.',
+            'title'      => self::t($titleKey),
+            'detail'     => self::t($detailKey, ['path' => $path]),
+            'suggestion' => self::t('route_suggestion'),
             'support'    => $support,
         ], $status);
     }
 
-    public static function validationError(array $errors, string $detail = 'The given data was invalid.'): JsonResponse
-    {
-        return response()->json([
-            'success' => false,
-            'status'  => 422,
-            'title'   => 'Unprocessable Entity',
-            'detail'  => $detail,
-            'errors'  => $errors,
-        ], 422);
-    }
-
-    public static function tooManyRequests(string $detail = 'Too many requests.'): JsonResponse
-    {
-        return self::problem(429, 'Too Many Requests', $detail);
-    }
-
-    public static function serverError(string $detail = 'An unexpected error occurred.'): JsonResponse
-    {
-        return self::problem(500, 'Internal Server Error', $detail);
-    }
-
     // ──────────────────────────────────────────────────────────────────
-    // Internal builders
+    // Internal
     // ──────────────────────────────────────────────────────────────────
 
     private static function success(mixed $data, string $message, int $status): JsonResponse
@@ -165,5 +173,10 @@ final class ApiResponse
             'title'   => $title,
             'detail'  => $detail,
         ], $status);
+    }
+
+    private static function t(string $key, array $replace = []): string
+    {
+        return (string) trans("api.{$key}", $replace);
     }
 }

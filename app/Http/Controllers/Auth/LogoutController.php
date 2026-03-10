@@ -20,6 +20,6 @@ final class LogoutController extends Controller
     {
         $this->authService->logout($request->user());
 
-        return ApiResponse::ok(message: 'Logged out successfully.');
+        return ApiResponse::ok(message: trans('api.logged_out'));
     }
 }

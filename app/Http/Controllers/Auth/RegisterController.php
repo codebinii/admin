@@ -31,7 +31,7 @@ final class RegisterController extends Controller
                 'user'  => new UserResource($result['user']),
                 'token' => $result['token'],
             ],
-            message: 'User registered successfully.',
+            message: trans('api.registered'),
         );
     }
 }
