@@ -40,12 +40,12 @@ return Application::configure(basePath: dirname(__DIR__))
             return ApiResponse::notFound("{$model} not found.");
         });
 
-        $exceptions->render(function (NotFoundHttpException $e) {
-            return ApiResponse::notFound('The requested endpoint does not exist.');
+        $exceptions->render(function (NotFoundHttpException $e, \Illuminate\Http\Request $request) {
+            return ApiResponse::routeNotFound($request->path(), 404);
         });
 
-        $exceptions->render(function (MethodNotAllowedHttpException $e) {
-            return ApiResponse::methodNotAllowed($e->getMessage());
+        $exceptions->render(function (MethodNotAllowedHttpException $e, \Illuminate\Http\Request $request) {
+            return ApiResponse::routeNotFound($request->path(), 405);
         });
 
         $exceptions->render(function (TooManyRequestsHttpException $e) {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Responses;
 
+use App\Models\CanalSoporte;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -94,6 +95,30 @@ final class ApiResponse
     public static function methodNotAllowed(string $detail = 'Method not allowed.'): JsonResponse
     {
         return self::problem(405, 'Method Not Allowed', $detail);
+    }
+
+    public static function routeNotFound(string $path, int $status = 404): JsonResponse
+    {
+        $title = $status === 405 ? 'Method Not Allowed' : 'Route Not Found';
+
+        $detail = $status === 405
+            ? "The HTTP method used is not allowed for: {$path}"
+            : "The path '{$path}' does not exist in this API.";
+
+        try {
+            $support = CanalSoporte::where('activo', true)->get(['canal', 'detalle', 'agente']);
+        } catch (\Throwable) {
+            $support = [];
+        }
+
+        return response()->json([
+            'success'    => false,
+            'status'     => $status,
+            'title'      => $title,
+            'detail'     => $detail,
+            'suggestion' => 'Please verify the endpoint path and HTTP method, or contact our support team.',
+            'support'    => $support,
+        ], $status);
     }
 
     public static function validationError(array $errors, string $detail = 'The given data was invalid.'): JsonResponse
