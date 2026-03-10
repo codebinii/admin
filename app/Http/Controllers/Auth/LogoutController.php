@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Responses\ApiResponse;
 use App\Services\Auth\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,6 @@ final class LogoutController extends Controller
     {
         $this->authService->logout($request->user());
 
-        return response()->json(['message' => 'Logged out successfully.']);
+        return ApiResponse::ok(message: 'Logged out successfully.');
     }
 }
