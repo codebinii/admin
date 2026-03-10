@@ -13,9 +13,11 @@ use Illuminate\Support\Facades\Http;
 final class WhatsAppVerificationService
 {
     private const CACHE_PREFIX        = 'whatsapp_otp:';
+    private const CACHE_LOCK_PREFIX   = 'whatsapp_resend_lock:';
     private const CACHE_CONFIG        = 'whatsapp_config';
     private const CACHE_SUPPORT       = 'whatsapp_support_contact';
-    private const CACHE_CONFIG_TTL    = 60; // minutes
+    private const CACHE_CONFIG_TTL    = 60;  // minutes
+    private const RESEND_LOCK_MINUTES = 30;
     private const GRAPH_BASE          = 'https://graph.facebook.com';
 
     // ──────────────────────────────────────────────────────────────
@@ -24,16 +26,24 @@ final class WhatsAppVerificationService
 
     /**
      * Generate OTP, persist it in cache and dispatch via Meta Cloud API.
+     * Returns ['otp_expires_in' => int, 'resend_in' => int] on success.
      *
      * @throws \RuntimeException when the API call fails
      */
-    public function sendOtp(User $user): int
+    public function sendOtp(User $user): array
     {
         $config = $this->getConfig();
         $otp    = $this->generateOtp();
         $ttl    = (int) $config->tiempo_otp;
 
         Cache::put($this->cacheKey($user->id), $otp, now()->addMinutes($ttl));
+
+        // Store lock expiry as timestamp so we can compute remaining minutes
+        Cache::put(
+            $this->lockKey($user->id),
+            now()->addMinutes(self::RESEND_LOCK_MINUTES)->timestamp,
+            now()->addMinutes(self::RESEND_LOCK_MINUTES),
+        );
 
         $this->dispatchTemplate(
             config:         $config,
@@ -42,7 +52,24 @@ final class WhatsAppVerificationService
             supportContact: $this->getSupportContact(),
         );
 
-        return $ttl;
+        return [
+            'otp_expires_in' => $ttl,
+            'resend_in'      => self::RESEND_LOCK_MINUTES,
+        ];
+    }
+
+    /**
+     * Returns remaining resend lock minutes, or 0 if lock is not active.
+     */
+    public function resendLockRemainingMinutes(User $user): int
+    {
+        $expiresAt = Cache::get($this->lockKey($user->id));
+
+        if ($expiresAt === null) {
+            return 0;
+        }
+
+        return (int) max(1, ceil(($expiresAt - now()->timestamp) / 60));
     }
 
     /**
@@ -136,6 +163,11 @@ final class WhatsAppVerificationService
     private function cacheKey(int|string $userId): string
     {
         return self::CACHE_PREFIX . $userId;
+    }
+
+    private function lockKey(int|string $userId): string
+    {
+        return self::CACHE_LOCK_PREFIX . $userId;
     }
 
     private function normalizeNumber(string $number): string

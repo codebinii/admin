@@ -28,14 +28,25 @@ final class SendWhatsAppOtpController extends Controller
             return ApiResponse::badRequest(trans('api.whatsapp_already_verified'));
         }
 
+        $remainingMinutes = $this->service->resendLockRemainingMinutes($user);
+
+        if ($remainingMinutes > 0) {
+            return ApiResponse::badRequest(
+                trans('api.whatsapp_otp_resend_locked', ['minutes' => $remainingMinutes]),
+            );
+        }
+
         try {
-            $ttl = $this->service->sendOtp($user);
+            $result = $this->service->sendOtp($user);
         } catch (\RuntimeException $e) {
             return ApiResponse::serverError($e->getMessage(), $e);
         }
 
         return ApiResponse::ok(
-            data:    ['expires_in_minutes' => $ttl],
+            data:    [
+                'otp_expires_in'  => $result['otp_expires_in'],
+                'resend_in'       => $result['resend_in'],
+            ],
             message: trans('api.whatsapp_otp_sent'),
         );
     }

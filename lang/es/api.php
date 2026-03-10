@@ -23,6 +23,7 @@ return [
 
     // WhatsApp verification
     'whatsapp_otp_sent'         => 'Código de verificación enviado por WhatsApp.',
+    'whatsapp_otp_resend_locked' => 'Debes esperar :minutes minuto(s) antes de solicitar un nuevo código.',
     'whatsapp_verified'         => 'WhatsApp verificado exitosamente.',
     'whatsapp_already_verified' => 'El número de WhatsApp ya está verificado.',
     'whatsapp_not_set'          => 'No tienes un número de WhatsApp registrado en tu cuenta.',
