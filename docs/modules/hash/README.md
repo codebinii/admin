@@ -1,10 +1,10 @@
 # Módulo Hash
 
-Utilidad de generación de hashes para el panel admin. Sin DB, sin estado — entrada de texto, salida con todos los algoritmos disponibles.
+Utilidades criptográficas para el panel admin. Sin DB, sin estado — entrada de parámetros, salida calculada al instante.
 
 ---
 
-## Endpoint
+## Endpoints
 
 ### `POST /api/hash` 🔒
 
@@ -41,12 +41,67 @@ Genera el hash del texto de entrada usando todos los algoritmos soportados por l
 
 ---
 
+### `GET /api/hash/clave` 🔒
+
+Genera una clave/contraseña aleatoria criptográficamente segura (`random_int`).
+
+**Query params (todos opcionales):**
+
+| Param | Tipo | Default | Descripción |
+|---|---|---|---|
+| `longitud` | integer | `12` | Longitud de la clave (min: 1, max: 256) |
+| `numeros` | boolean | `true` | Incluir dígitos `0-9` |
+| `minusculas` | boolean | `true` | Incluir letras minúsculas `a-z` |
+| `mayusculas` | boolean | `true` | Incluir letras mayúsculas `A-Z` |
+| `especiales` | boolean | `true` | Incluir caracteres especiales `!@#$%^&*...` |
+
+> Al menos un conjunto de caracteres debe estar activo. Si todos son `false`, retorna `422`.
+
+**Ejemplo de request:**
+```
+GET /api/hash/clave?longitud=16&especiales=false
+```
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": {
+    "clave": "aB3xZ9mK2wQr4nPv",
+    "longitud": 16,
+    "opciones": {
+      "numeros": true,
+      "minusculas": true,
+      "mayusculas": true,
+      "especiales": false
+    }
+  }
+}
+```
+
+**Response `422` (todos los conjuntos desactivados):**
+```json
+{
+  "success": false,
+  "message": "Al menos un conjunto de caracteres debe estar activo.",
+  "errors": {
+    "opciones": ["Al menos un conjunto de caracteres debe estar activo."]
+  }
+}
+```
+
+---
+
 ## Estructura
 
 ```
 app/Http/
-├── Controllers/Hash/HashController.php   ← invokable
-└── Requests/Hash/HashRequest.php         ← valida texto max:5000
+├── Controllers/Hash/
+│   ├── HashController.php           ← invokable, POST /
+│   └── GenerarClaveController.php   ← invokable, GET /clave
+└── Requests/Hash/
+    ├── HashRequest.php              ← valida texto max:5000
+    └── GenerarClaveRequest.php      ← valida params + al menos 1 charset activo
 
 routes/hash.php
 ```
