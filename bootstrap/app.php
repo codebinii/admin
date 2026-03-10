@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\ForceJsonResponse;
+use App\Http\Middleware\RequireSaasModule;
+use App\Http\Middleware\ValidateSaasKey;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -26,6 +28,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Pure API — never redirect unauthenticated requests to a login route.
         $middleware->redirectGuestsTo(fn () => null);
+
+        // SaaS M2M authentication middleware aliases
+        $middleware->alias([
+            'saas.auth'   => ValidateSaasKey::class,
+            'saas.module' => RequireSaasModule::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
 

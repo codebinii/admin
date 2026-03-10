@@ -23,6 +23,14 @@ return [
     'password_changed'         => 'Contraseña cambiada exitosamente.',
     'invalid_current_password' => 'La contraseña actual es incorrecta.',
 
+    // SaaS M2M access
+    'saas_key_missing'     => 'Se requiere la cabecera X-Api-Key.',
+    'saas_key_invalid'     => 'API key inválida o empresa inactiva.',
+    'saas_module_inactive' => 'El módulo solicitado no está habilitado para esta empresa.',
+    'saas_key_generated'   => 'API key generada exitosamente. Guárdala — no se mostrará de nuevo.',
+    'saas_key_revoked'     => 'API key revocada exitosamente.',
+    'saas_module_toggled'  => 'Estado del módulo actualizado.',
+
     // Phone (SMS) verification
     'phone_otp_sent'          => 'Código de verificación enviado por SMS.',
     'phone_otp_resend_locked' => 'Debes esperar :minutes minuto(s) antes de solicitar un nuevo código.',
