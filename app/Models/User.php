@@ -19,9 +19,9 @@ final class User extends Authenticatable
         'email',
         'password',
         'phone',
-        'phone_verified',
+        'phone_verified_at',
         'whatsapp',
-        'whatsapp_verified',
+        'whatsapp_verified_at',
     ];
 
     protected $hidden = [
@@ -34,8 +34,8 @@ final class User extends Authenticatable
         return [
             'email_verified_at'  => 'datetime',
             'password'           => 'hashed',
-            'phone_verified'     => 'boolean',
-            'whatsapp_verified'  => 'boolean',
+            'phone_verified_at'    => 'datetime',
+            'whatsapp_verified_at' => 'datetime',
         ];
     }
 }
