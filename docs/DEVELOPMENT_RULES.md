@@ -330,5 +330,5 @@ feat: agregar autenticación con Sanctum
 
 ## Sobre el Autor
 
-- **Codebini & Vidal** — Arquitectura, diseño y dirección del proyecto
+- **Codebini & Vidi** — Arquitectura, diseño y dirección del proyecto
 - **Claude Sonnet 4.6 (Anthropic)** — Co-autor de implementación
