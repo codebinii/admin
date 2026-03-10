@@ -21,8 +21,12 @@ app/
 │   │   ├── ResendVerificationController.php
 │   │   ├── ForgotPasswordController.php
 │   │   ├── ResetPasswordController.php
+│   │   ├── SessionsController.php
+│   │   ├── RevokeSessionController.php
 │   │   ├── SendWhatsAppOtpController.php
-│   │   └── VerifyWhatsAppController.php
+│   │   ├── VerifyWhatsAppController.php
+│   │   ├── SendPhoneOtpController.php
+│   │   └── VerifyPhoneController.php
 │   ├── Requests/Auth/
 │   │   ├── LoginRequest.php
 │   │   ├── RegisterRequest.php
@@ -30,18 +34,22 @@ app/
 │   │   ├── ChangePasswordRequest.php
 │   │   ├── ForgotPasswordRequest.php
 │   │   ├── ResetPasswordRequest.php
-│   │   └── VerifyWhatsAppRequest.php
+│   │   ├── VerifyWhatsAppRequest.php
+│   │   └── VerifyPhoneRequest.php
 │   └── Resources/Auth/
 │       └── UserResource.php
 ├── Models/
 │   ├── User.php
-│   └── ConfigDefecto.php       ← solo lectura, tabla 03config_defecto
+│   ├── ConfigDefecto.php       ← solo lectura, tabla 03config_defecto
+│   └── CanalSoporte.php        ← solo lectura, tabla canales_soporte
 ├── Notifications/Auth/
 │   ├── VerifyEmailNotification.php
 │   └── ResetPasswordNotification.php
 └── Services/Auth/
     ├── AuthService.php
-    └── WhatsAppVerificationService.php
+    ├── OtpVerificationService.php  ← abstract: lógica OTP/cache/lock compartida
+    ├── WhatsAppVerificationService.php
+    └── PhoneVerificationService.php
 
 routes/auth.php
 lang/{en,es}/api.php
@@ -223,6 +231,71 @@ Valida el OTP recibido por WhatsApp y marca `whatsapp_verified_at`.
 
 ---
 
+### GET `/api/auth/sessions` 🔒
+
+Lista todos los tokens activos del usuario.
+
+**Response `200`:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "mi-app",
+      "last_used_at": "2026-03-09T10:00:00Z",
+      "created_at": "2026-03-01T08:00:00Z",
+      "expires_at": null,
+      "current": true
+    }
+  ]
+}
+```
+
+---
+
+### DELETE `/api/auth/sessions/{id}` 🔒
+
+Revoca un token específico por ID.
+
+**Response `200`:** sesión revocada.
+**Response `404`:** token no encontrado o no pertenece al usuario.
+
+---
+
+### POST `/api/auth/phone/send` 🔒
+
+Genera un OTP de 6 dígitos y lo envía al número `phone` del usuario via SMS.
+
+**Rate limit:** 5 req/min
+
+**Requisitos:** el usuario debe tener `phone` registrado y no verificado. Resend lock de **30 minutos**.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "Código de verificación enviado por SMS.",
+  "data": { "otp_expires_in": 5, "resend_in": 30 }
+}
+```
+
+**Errores:**
+- `400` — sin teléfono registrado / ya verificado / lock activo (incluye `minutes` restantes en el mensaje)
+- `500` — error de SMS API
+
+---
+
+### POST `/api/auth/phone/verify` 🔒
+
+Valida el OTP recibido por SMS y marca `phone_verified_at`.
+
+**Body:** `{ "code": "123456" }`
+
+**Response `200`:** devuelve `UserResource` con `phone_verified_at` actualizado.
+**Response `400`:** código incorrecto o expirado.
+
+---
+
 ## WhatsApp — Configuración Meta Cloud API
 
 Credenciales leídas desde `03config_defecto` (tabla compartida, solo lectura):
@@ -275,6 +348,34 @@ El número del destinatario se normaliza a dígitos puros antes del envío (ej. 
 
 ---
 
+## Phone (SMS) — Configuración
+
+Credenciales leídas desde `03config_defecto`:
+
+| Campo          | Uso                                |
+|----------------|------------------------------------|
+| `sms_url`      | Endpoint del proveedor SMS         |
+| `sms_token`    | Token de autenticación             |
+| `sms_user`     | Email/usuario de la cuenta         |
+| `sms_type_send`| Tipo de envío del proveedor        |
+| `tiempo_otp`   | Minutos de vigencia del OTP        |
+
+**Endpoint:** `POST https://contacto-virtual.com/a/api/send/sms/json`
+
+**Payload:**
+```json
+{
+  "token": "...",
+  "email": "cuenta@ejemplo.com",
+  "type_send": "sms",
+  "data": [{ "cellphone": "573155533324", "message": "Tu código de verificación de AppName es: 834521. Válido por unos minutos." }]
+}
+```
+
+Mensaje traducible via `lang/{locale}/sms.php` → clave `otp_message`.
+
+---
+
 ## Modelo User
 
 Tabla: `users`
@@ -298,14 +399,15 @@ Tabla: `users`
 
 | Medida                   | Detalle                                                  |
 |--------------------------|----------------------------------------------------------|
-| Rate limit login         | 10 req/min por IP                                        |
-| Rate limit register      | 5 req/min por IP                                         |
-| Rate limit whatsapp/send | 5 req/min por usuario                                    |
-| Tokens Sanctum           | Stateless, revocables por dispositivo o masivo           |
-| Expiración tokens        | `SANCTUM_TOKEN_EXPIRATION=1440` (24 h)                   |
-| OTP WhatsApp             | 6 dígitos, cache TTL configurable (`tiempo_otp` minutos) |
-| Reset password           | Revoca todos los tokens Sanctum al completar             |
-| Campos ocultos           | `password` y `remember_token` excluidos del JSON         |
+| Rate limit login           | 10 req/min por IP                                          |
+| Rate limit register        | 5 req/min por IP                                           |
+| Rate limit whatsapp/phone  | 5 req/min por usuario                                      |
+| Resend lock OTP            | 30 min por canal (WhatsApp y Phone independientes)         |
+| Tokens Sanctum             | Stateless, revocables por dispositivo o masivo             |
+| Expiración tokens          | `SANCTUM_TOKEN_EXPIRATION=1440` (24 h)                     |
+| OTP                        | 6 dígitos, cache TTL configurable (`tiempo_otp` minutos)   |
+| Reset password             | Revoca todos los tokens Sanctum al completar               |
+| Campos ocultos             | `password` y `remember_token` excluidos del JSON           |
 
 ---
 

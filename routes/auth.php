@@ -13,9 +13,11 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResendVerificationController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\RevokeSessionController;
+use App\Http\Controllers\Auth\SendPhoneOtpController;
 use App\Http\Controllers\Auth\SendWhatsAppOtpController;
 use App\Http\Controllers\Auth\SessionsController;
 use App\Http\Controllers\Auth\UpdateProfileController;
+use App\Http\Controllers\Auth\VerifyPhoneController;
 use App\Http\Controllers\Auth\VerifyWhatsAppController;
 use Illuminate\Support\Facades\Route;
 
@@ -51,5 +53,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::middleware('throttle:5,1')->group(function (): void {
         Route::post('/whatsapp/send',   SendWhatsAppOtpController::class);
         Route::post('/whatsapp/verify', VerifyWhatsAppController::class);
+    });
+
+    // Phone (SMS) verification
+    Route::middleware('throttle:5,1')->group(function (): void {
+        Route::post('/phone/send',   SendPhoneOtpController::class);
+        Route::post('/phone/verify', VerifyPhoneController::class);
     });
 });

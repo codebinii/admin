@@ -22,6 +22,14 @@ return [
     'password_changed'         => 'Password changed successfully.',
     'invalid_current_password' => 'The current password is incorrect.',
 
+    // Phone (SMS) verification
+    'phone_otp_sent'          => 'Verification code sent via SMS.',
+    'phone_otp_resend_locked' => 'Please wait :minutes minute(s) before requesting a new code.',
+    'phone_verified'          => 'Phone number verified successfully.',
+    'phone_already_verified'  => 'Your phone number is already verified.',
+    'phone_not_set'           => 'You have no phone number registered on your account.',
+    'phone_otp_invalid'       => 'The code is incorrect or has expired.',
+
     // WhatsApp verification
     'whatsapp_otp_sent'         => 'Verification code sent via WhatsApp.',
     'whatsapp_otp_resend_locked' => 'Please wait :minutes minute(s) before requesting a new code.',

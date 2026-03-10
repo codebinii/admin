@@ -22,6 +22,14 @@ return [
     'password_changed'         => 'Contraseña cambiada exitosamente.',
     'invalid_current_password' => 'La contraseña actual es incorrecta.',
 
+    // Phone (SMS) verification
+    'phone_otp_sent'          => 'Código de verificación enviado por SMS.',
+    'phone_otp_resend_locked' => 'Debes esperar :minutes minuto(s) antes de solicitar un nuevo código.',
+    'phone_verified'          => 'Número de teléfono verificado exitosamente.',
+    'phone_already_verified'  => 'El número de teléfono ya está verificado.',
+    'phone_not_set'           => 'No tienes un número de teléfono registrado en tu cuenta.',
+    'phone_otp_invalid'       => 'El código es incorrecto o ha expirado.',
+
     // WhatsApp verification
     'whatsapp_otp_sent'         => 'Código de verificación enviado por WhatsApp.',
     'whatsapp_otp_resend_locked' => 'Debes esperar :minutes minuto(s) antes de solicitar un nuevo código.',
