@@ -28,7 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (AuthenticationException $e) {
-            return ApiResponse::unauthorized('Unauthenticated. Please log in.');
+            return ApiResponse::unauthorized(trans('api.unauthorized'));
         });
 
         $exceptions->render(function (AuthorizationException $e) {

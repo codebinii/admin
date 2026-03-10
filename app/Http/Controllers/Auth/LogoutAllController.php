@@ -18,7 +18,13 @@ final class LogoutAllController extends Controller
 
     public function __invoke(Request $request): JsonResponse
     {
-        $this->authService->logoutAll($request->user());
+        $user = $request->user();
+
+        if ($user === null) {
+            return ApiResponse::unauthorized(trans('api.unauthorized'));
+        }
+
+        $this->authService->logoutAll($user);
 
         return ApiResponse::ok(message: trans('api.logged_out_all'));
     }

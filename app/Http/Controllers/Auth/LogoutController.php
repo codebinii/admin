@@ -18,7 +18,13 @@ final class LogoutController extends Controller
 
     public function __invoke(Request $request): JsonResponse
     {
-        $this->authService->logout($request->user());
+        $user = $request->user();
+
+        if ($user === null) {
+            return ApiResponse::unauthorized(trans('api.unauthorized'));
+        }
+
+        $this->authService->logout($user);
 
         return ApiResponse::ok(message: trans('api.logged_out'));
     }
