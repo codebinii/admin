@@ -16,6 +16,14 @@ final class VerifyEmailNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public function __construct()
+    {
+        // Send synchronously on local/testing — use queue on production
+        if (! app()->isProduction()) {
+            $this->onConnection('sync');
+        }
+    }
+
     public function via(object $notifiable): array
     {
         return ['mail'];
@@ -28,9 +36,9 @@ final class VerifyEmailNotification extends Notification implements ShouldQueue
         return (new MailMessage())
             ->subject(trans('auth.verify_subject', ['app' => config('app.name')]))
             ->view('emails.auth.verify', [
-                'user'       => $notifiable,
-                'verifyUrl'  => $url,
-                'appName'    => config('app.name'),
+                'user'        => $notifiable,
+                'verifyUrl'   => $url,
+                'appName'     => config('app.name'),
                 'expiresMins' => Config::get('auth.verification.expire', 60),
             ]);
     }
