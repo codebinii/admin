@@ -327,3 +327,8 @@ feat: agregar autenticación con Sanctum
 - [ ] **Campos booleanos normalizados con trait NormalizesBooleans**
 - [ ] Documentación actualizada (si aplica)
 - [ ] Mensaje de commit descriptivo
+
+## Sobre el Autor
+
+- **Codebini & Vidal** — Arquitectura, diseño y dirección del proyecto
+- **Claude Sonnet 4.6 (Anthropic)** — Co-autor de implementación
