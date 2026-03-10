@@ -18,6 +18,10 @@ final class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'phone_verified',
+        'whatsapp',
+        'whatsapp_verified',
     ];
 
     protected $hidden = [
@@ -28,8 +32,10 @@ final class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
+            'email_verified_at'  => 'datetime',
+            'password'           => 'hashed',
+            'phone_verified'     => 'boolean',
+            'whatsapp_verified'  => 'boolean',
         ];
     }
 }
