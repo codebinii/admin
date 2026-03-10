@@ -21,6 +21,19 @@ return [
     'password_changed'         => 'Password changed successfully.',
     'invalid_current_password' => 'The current password is incorrect.',
 
+    // WhatsApp verification
+    'whatsapp_otp_sent'         => 'Verification code sent via WhatsApp.',
+    'whatsapp_verified'         => 'WhatsApp verified successfully.',
+    'whatsapp_already_verified' => 'Your WhatsApp number is already verified.',
+    'whatsapp_not_set'          => 'You have no WhatsApp number registered on your account.',
+    'whatsapp_otp_invalid'      => 'The code is incorrect or has expired.',
+
+    // Password recovery
+    'password_reset_sent'          => 'If your email is registered, you will receive a password reset link shortly.',
+    'password_reset_success'       => 'Password reset successfully. Please log in with your new password.',
+    'password_reset_failed'        => 'Unable to send the recovery email. Please verify the email address provided.',
+    'password_reset_invalid_token' => 'The password reset token is invalid or has expired.',
+
     // Email verification
     'verification_sent'          => 'Verification email sent.',
     'email_verified'             => 'Email verified successfully.',

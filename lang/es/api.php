@@ -21,6 +21,19 @@ return [
     'password_changed'         => 'Contraseña cambiada exitosamente.',
     'invalid_current_password' => 'La contraseña actual es incorrecta.',
 
+    // WhatsApp verification
+    'whatsapp_otp_sent'         => 'Código de verificación enviado por WhatsApp.',
+    'whatsapp_verified'         => 'WhatsApp verificado exitosamente.',
+    'whatsapp_already_verified' => 'El número de WhatsApp ya está verificado.',
+    'whatsapp_not_set'          => 'No tienes un número de WhatsApp registrado en tu cuenta.',
+    'whatsapp_otp_invalid'      => 'El código es incorrecto o ha expirado.',
+
+    // Password recovery
+    'password_reset_sent'          => 'Si tu correo está registrado, recibirás un enlace para restablecer tu contraseña.',
+    'password_reset_success'       => 'Contraseña restablecida exitosamente. Inicia sesión con tu nueva contraseña.',
+    'password_reset_failed'        => 'No fue posible enviar el correo de recuperación. Verifica el email ingresado.',
+    'password_reset_invalid_token' => 'El token de restablecimiento es inválido o ha expirado.',
+
     // Email verification
     'verification_sent'          => 'Correo de verificación enviado.',
     'email_verified'             => 'Correo verificado exitosamente.',

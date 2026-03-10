@@ -7,6 +7,7 @@ namespace App\Services\Auth;
 use App\Models\User;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 final class AuthService
 {
@@ -92,6 +93,24 @@ final class AuthService
         $user->markEmailAsVerified();
 
         return true;
+    }
+
+    /** Returns Password::RESET_LINK_SENT or Password::INVALID_USER */
+    public function sendPasswordResetLink(string $email): string
+    {
+        return Password::sendResetLink(['email' => $email]);
+    }
+
+    /** Returns Password::PASSWORD_RESET or a failure status string */
+    public function resetPassword(string $email, string $token, string $password): string
+    {
+        return Password::reset(
+            ['email' => $email, 'token' => $token, 'password' => $password],
+            function (User $user, string $newPassword): void {
+                $user->update(['password' => $newPassword]);
+                $user->tokens()->delete(); // revoke all Sanctum tokens on password reset
+            },
+        );
     }
 
     public function logout(User $user): void

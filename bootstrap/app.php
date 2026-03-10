@@ -32,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return match (true) {
 
                 $e instanceof ValidationException =>
-                    ApiResponse::validationError($e->errors(), $e->getMessage()),
+                    ApiResponse::validationError($e->errors(), trans('api.validation_detail')),
 
                 $e instanceof AuthenticationException =>
                     ApiResponse::unauthorized(trans('api.unauthorized')),

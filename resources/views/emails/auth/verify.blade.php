@@ -28,12 +28,12 @@
                         <td style="padding:40px 40px 32px;">
 
                             <p style="margin:0 0 8px;font-size:22px;font-weight:600;color:#18181b;">
-                                Verifica tu correo
+                                Confirma tu correo electrónico
                             </p>
 
                             <p style="margin:0 0 24px;font-size:15px;color:#71717a;line-height:1.6;">
                                 Hola <strong style="color:#18181b;">{{ $user->name }}</strong>,
-                                solo falta un paso. Confirma tu dirección para activar tu cuenta.
+                                verifica tu correo para aprovechar al 100% todas las funcionalidades de tu cuenta.
                             </p>
 
                             {{-- CTA Button --}}
