@@ -21,5 +21,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
     // Module management
     Route::get('/modulos',                                          [ModuloController::class, 'index']);
     Route::patch('/modulos/{modulo}/toggle',                        [ModuloController::class, 'toggleGlobal']);
+    Route::put('/empresas/{empresa}/modulos',                       [ModuloController::class, 'syncEmpresa']);
     Route::post('/empresas/{empresa}/modulos/{modulo}/toggle',      [ModuloController::class, 'toggleEmpresa']);
 });

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Saas;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Saas\SyncModulosRequest;
 use App\Http\Resources\Saas\ModuloResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Saas\Empresa;
@@ -39,6 +40,23 @@ final class ModuloController extends Controller
         return ApiResponse::ok(
             data:    ['activo' => $newState],
             message: trans('api.saas_module_toggled'),
+        );
+    }
+
+    /**
+     * Sync active modules for an empresa from a full list of IDs.
+     * IDs present → activo = true. IDs absent → activo = false.
+     * Send empty array to deactivate all modules for the empresa.
+     */
+    public function syncEmpresa(SyncModulosRequest $request, Empresa $empresa): JsonResponse
+    {
+        $this->moduloService->syncForEmpresa($empresa, $request->input('modulos', []));
+
+        $empresa->load('modulos');
+
+        return ApiResponse::ok(
+            data:    ModuloResource::collection($empresa->modulos),
+            message: trans('api.saas_modules_synced'),
         );
     }
 

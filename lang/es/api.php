@@ -30,6 +30,7 @@ return [
     'saas_key_generated'   => 'API key generada exitosamente. Guárdala — no se mostrará de nuevo.',
     'saas_key_revoked'     => 'API key revocada exitosamente.',
     'saas_module_toggled'  => 'Estado del módulo actualizado.',
+    'saas_modules_synced'  => 'Módulos de la empresa actualizados.',
 
     // Phone (SMS) verification
     'phone_otp_sent'          => 'Código de verificación enviado por SMS.',

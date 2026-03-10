@@ -82,6 +82,37 @@ final class ModuloService
         return $newState;
     }
 
+    /**
+     * Sync the active modules for an empresa from a list of modulo IDs.
+     * - IDs in $moduloIds  → upsert with activo = true
+     * - IDs previously set → set activo = false if not in $moduloIds
+     * Cache is invalidated once after all changes.
+     */
+    public function syncForEmpresa(Empresa $empresa, array $moduloIds): void
+    {
+        $now = now();
+
+        // Activate or create rows for the provided IDs
+        foreach ($moduloIds as $moduloId) {
+            EmpresaModulo::updateOrCreate(
+                ['empresa_id' => $empresa->id, 'modulo_id' => $moduloId],
+                ['activo' => true, 'updated_at' => $now],
+            );
+        }
+
+        // Deactivate any previously assigned modules not in the list
+        if (! empty($moduloIds)) {
+            EmpresaModulo::where('empresa_id', $empresa->id)
+                ->whereNotIn('modulo_id', $moduloIds)
+                ->update(['activo' => false, 'updated_at' => $now]);
+        } else {
+            EmpresaModulo::where('empresa_id', $empresa->id)
+                ->update(['activo' => false, 'updated_at' => $now]);
+        }
+
+        $this->invalidateCacheForEmpresa($empresa->id);
+    }
+
     public function invalidateCacheForEmpresa(int|string $empresaId): void
     {
         Cache::forget(self::CACHE_MODULES . $empresaId);

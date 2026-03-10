@@ -30,6 +30,7 @@ return [
     'saas_key_generated'   => 'API key generated successfully. Store it — it will not be shown again.',
     'saas_key_revoked'     => 'API key revoked successfully.',
     'saas_module_toggled'  => 'Module status updated.',
+    'saas_modules_synced'  => 'Company modules updated.',
 
     // Phone (SMS) verification
     'phone_otp_sent'          => 'Verification code sent via SMS.',
