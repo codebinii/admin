@@ -14,6 +14,7 @@ return [
     'logged_in'       => 'Inicio de sesión exitoso.',
     'logged_out'      => 'Sesión cerrada exitosamente.',
     'logged_out_all'  => 'Todas las sesiones fueron cerradas exitosamente.',
+    'session_revoked' => 'Sesión revocada exitosamente.',
     'registered'      => 'Usuario registrado exitosamente.',
 
     // Profile

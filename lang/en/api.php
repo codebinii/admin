@@ -14,6 +14,7 @@ return [
     'logged_in'       => 'Login successful.',
     'logged_out'      => 'Logged out successfully.',
     'logged_out_all'  => 'All sessions closed successfully.',
+    'session_revoked' => 'Session revoked successfully.',
     'registered'      => 'User registered successfully.',
 
     // Profile

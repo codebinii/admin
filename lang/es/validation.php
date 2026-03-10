@@ -152,6 +152,8 @@ return [
     'ulid'                 => 'El campo :attribute debe ser un ULID válido.',
     'uuid'                 => 'El campo :attribute debe ser un UUID válido.',
 
+    'regex'                => 'El formato del campo :attribute no es válido.',
+
     'attributes' => [
         'name'                  => 'nombre',
         'email'                 => 'correo electrónico',

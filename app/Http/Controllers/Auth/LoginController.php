@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Resources\Auth\UserResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Auth\AuthService;
 use Illuminate\Auth\AuthenticationException;
@@ -20,7 +21,7 @@ final class LoginController extends Controller
     public function __invoke(LoginRequest $request): JsonResponse
     {
         try {
-            $token = $this->authService->login(
+            $result = $this->authService->login(
                 email:      $request->string('email')->toString(),
                 password:   $request->string('password')->toString(),
                 deviceName: $request->string('device_name', 'api')->toString(),
@@ -29,6 +30,12 @@ final class LoginController extends Controller
             return ApiResponse::unauthorized(trans('api.invalid_credentials'));
         }
 
-        return ApiResponse::ok(['token' => $token], trans('api.logged_in'));
+        return ApiResponse::ok(
+            data:    [
+                'user'  => new UserResource($result['user']),
+                'token' => $result['token'],
+            ],
+            message: trans('api.logged_in'),
+        );
     }
 }

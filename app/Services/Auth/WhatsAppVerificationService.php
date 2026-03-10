@@ -58,6 +58,11 @@ final class WhatsAppVerificationService
         ];
     }
 
+    public function clearResendLock(User $user): void
+    {
+        Cache::forget($this->lockKey($user->id));
+    }
+
     /**
      * Returns remaining resend lock minutes, or 0 if lock is not active.
      */

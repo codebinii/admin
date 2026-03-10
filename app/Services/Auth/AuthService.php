@@ -11,8 +11,11 @@ use Illuminate\Support\Facades\Password;
 
 final class AuthService
 {
-    /** @throws AuthenticationException */
-    public function login(string $email, string $password, string $deviceName): string
+    /**
+     * @throws AuthenticationException
+     * @return array{user: User, token: string}
+     */
+    public function login(string $email, string $password, string $deviceName): array
     {
         $user = User::where('email', $email)->first();
 
@@ -20,7 +23,10 @@ final class AuthService
             throw new AuthenticationException('Invalid credentials.');
         }
 
-        return $user->createToken($deviceName)->plainTextToken;
+        return [
+            'user'  => $user,
+            'token' => $user->createToken($deviceName)->plainTextToken,
+        ];
     }
 
     public function register(

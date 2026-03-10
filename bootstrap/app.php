@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -20,9 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Always respond with JSON — prevents HTML error pages on missing Accept header
+        $middleware->api(prepend: [ForceJsonResponse::class]);
+
         // Pure API — never redirect unauthenticated requests to a login route.
-        // Returning null causes the Authenticate middleware to throw
-        // AuthenticationException directly instead of attempting a redirect.
         $middleware->redirectGuestsTo(fn () => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
