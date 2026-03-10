@@ -16,6 +16,17 @@ return [
     'logged_out_all'  => 'All sessions closed successfully.',
     'registered'      => 'User registered successfully.',
 
+    // Profile
+    'profile_updated'          => 'Profile updated successfully.',
+    'password_changed'         => 'Password changed successfully.',
+    'invalid_current_password' => 'The current password is incorrect.',
+
+    // Email verification
+    'verification_sent'          => 'Verification email sent.',
+    'email_verified'             => 'Email verified successfully.',
+    'email_already_verified'     => 'Email is already verified.',
+    'verification_link_invalid'  => 'The verification link is invalid or has expired.',
+
     // Errors — RFC 7807
     'bad_request'     => 'Bad request.',
     'unauthorized'    => 'Unauthenticated. Please log in.',

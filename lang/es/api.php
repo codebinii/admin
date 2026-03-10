@@ -16,6 +16,17 @@ return [
     'logged_out_all'  => 'Todas las sesiones fueron cerradas exitosamente.',
     'registered'      => 'Usuario registrado exitosamente.',
 
+    // Profile
+    'profile_updated'          => 'Perfil actualizado exitosamente.',
+    'password_changed'         => 'Contraseña cambiada exitosamente.',
+    'invalid_current_password' => 'La contraseña actual es incorrecta.',
+
+    // Email verification
+    'verification_sent'          => 'Correo de verificación enviado.',
+    'email_verified'             => 'Correo verificado exitosamente.',
+    'email_already_verified'     => 'El correo ya está verificado.',
+    'verification_link_invalid'  => 'El enlace de verificación es inválido o ha expirado.',
+
     // Errors — RFC 7807
     'bad_request'     => 'Solicitud incorrecta.',
     'unauthorized'    => 'No autenticado. Por favor inicia sesión.',
