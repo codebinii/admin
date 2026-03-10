@@ -14,7 +14,8 @@ final class SaasAuditService
     public const KEY_REVOKED           = 'key_revoked';
     public const MODULE_TOGGLED        = 'module_toggled';
     public const MODULES_SYNCED        = 'modules_synced';
-    public const MODULE_GLOBAL_TOGGLED = 'module_global_toggled';
+    public const MODULE_GLOBAL_TOGGLED  = 'module_global_toggled';
+    public const EMPRESA_ESTADO_TOGGLED = 'empresa_estado_toggled';
 
     /**
      * Record a SaaS admin action.

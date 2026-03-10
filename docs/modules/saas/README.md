@@ -29,7 +29,21 @@ Content-Type: application/json
 GET /api/saas/empresas
 ```
 
-Devuelve lista paginada. Útil para el listado principal del panel.
+Devuelve lista paginada con conteo de API keys activas. Útil para el listado principal del panel.
+
+**Query params (todos opcionales):**
+
+| Parámetro | Tipo    | Descripción                                   |
+|-----------|---------|-----------------------------------------------|
+| `search`  | string  | Busca por `nombre` o `cod_empresa` (insensible a mayúsculas) |
+| `estado`  | boolean | `true` = solo activas, `false` = solo bloqueadas |
+
+**Ejemplos:**
+```
+GET /api/saas/empresas?search=codebini
+GET /api/saas/empresas?estado=false
+GET /api/saas/empresas?search=EMP&estado=true
+```
 
 **Response `200`:**
 ```json
@@ -257,6 +271,37 @@ Elimina la key permanentemente. La app SaaS perderá acceso de inmediato.
 
 ---
 
+### 🖥️ Activar / desactivar empresa
+
+```
+PATCH /api/saas/empresas/{id}/toggle
+```
+
+Bloquea o reactiva una empresa. Al **desactivar**, los caches de todas sus API keys se invalidan inmediatamente — la app SaaS recibirá advertencia de bloqueo en el siguiente request sin esperar expiración de cache.
+
+**Response `200` (al desactivar):**
+```json
+{
+  "success": true,
+  "message": "Empresa desactivada. La app SaaS retornará advertencia de bloqueo.",
+  "data": { "estado": false }
+}
+```
+
+**Response `200` (al activar):**
+```json
+{
+  "success": true,
+  "message": "Empresa activada exitosamente.",
+  "data": { "estado": true }
+}
+```
+
+> Acción registrada en audit log con `accion: empresa_estado_toggled`.
+> Recomendable mostrar confirmación antes de desactivar.
+
+---
+
 ## 🖥️ Historial de auditoría
 
 ### Consultar historial
@@ -285,6 +330,7 @@ Devuelve el historial paginado de acciones administrativas. Útil para revisar y
 | `module_toggled`       | Activación/desactivación de módulo por empresa    |
 | `modules_synced`       | Sincronización masiva de módulos para una empresa |
 | `module_global_toggled`| Cambio de estado global de un módulo              |
+| `empresa_estado_toggled`| Activación o desactivación de una empresa        |
 
 **Ejemplo:** historial de una empresa en una fecha
 

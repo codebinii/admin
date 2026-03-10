@@ -24,6 +24,8 @@ return [
     'invalid_current_password' => 'La contraseña actual es incorrecta.',
 
     // SaaS M2M access
+    'saas_empresa_activada'    => 'Empresa activada exitosamente.',
+    'saas_empresa_desactivada' => 'Empresa desactivada. La app SaaS retornará advertencia de bloqueo.',
     'saas_key_missing'     => 'Se requiere la cabecera X-Api-Key.',
     'saas_key_invalid'     => 'API key inválida o empresa inactiva.',
     'saas_module_inactive' => 'El módulo solicitado no está habilitado para esta empresa.',

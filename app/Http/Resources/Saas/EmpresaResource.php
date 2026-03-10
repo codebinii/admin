@@ -17,10 +17,11 @@ final class EmpresaResource extends JsonResource
             'nombre'       => $this->nombre,
             'sigla'        => $this->sigla,
             'pais'         => $this->pais,
-            'estado'       => $this->estado,
-            'email_admin'  => $this->email_admin,
-            'no_celular'   => $this->no_celular,
-            'created_at'   => $this->created_at,
+            'estado'          => $this->estado,
+            'email_admin'     => $this->email_admin,
+            'no_celular'      => $this->no_celular,
+            'api_keys_count'  => $this->whenCounted('api_keys_count'),
+            'created_at'      => $this->created_at,
         ];
     }
 }

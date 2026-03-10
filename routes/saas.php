@@ -11,9 +11,10 @@ use Illuminate\Support\Facades\Route;
 // Admin management routes — require authenticated admin user
 Route::middleware('auth:sanctum')->group(function (): void {
 
-    // Empresa listing & detail
-    Route::get('/empresas',       [EmpresaController::class, 'index']);
-    Route::get('/empresas/{empresa}', [EmpresaController::class, 'show']);
+    // Empresa listing, detail & estado toggle
+    Route::get('/empresas',                        [EmpresaController::class, 'index']);
+    Route::get('/empresas/{empresa}',              [EmpresaController::class, 'show']);
+    Route::patch('/empresas/{empresa}/toggle',     [EmpresaController::class, 'toggleEstado']);
 
     // API key management
     Route::post('/empresas/{empresa}/keys',          [ApiKeyController::class, 'store']);
