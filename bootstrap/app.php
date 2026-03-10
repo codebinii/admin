@@ -1,12 +1,13 @@
 <?php
 
 use App\Http\Responses\ApiResponse;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -23,39 +24,38 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
 
-        $exceptions->render(function (ValidationException $e) {
-            return ApiResponse::validationError($e->errors(), $e->getMessage());
-        });
+        $exceptions->render(function (Throwable $e, Request $request) {
 
-        $exceptions->render(function (AuthenticationException $e) {
-            return ApiResponse::unauthorized(trans('api.unauthorized'));
-        });
+            return match (true) {
 
-        $exceptions->render(function (AuthorizationException $e) {
-            return ApiResponse::forbidden($e->getMessage() ?: 'This action is unauthorized.');
-        });
+                $e instanceof ValidationException =>
+                    ApiResponse::validationError($e->errors(), $e->getMessage()),
 
-        $exceptions->render(function (ModelNotFoundException $e) {
-            $model = class_basename($e->getModel());
-            return ApiResponse::notFound("{$model} not found.");
-        });
+                $e instanceof AuthenticationException =>
+                    ApiResponse::unauthorized(trans('api.unauthorized')),
 
-        $exceptions->render(function (NotFoundHttpException $e, \Illuminate\Http\Request $request) {
-            return ApiResponse::routeNotFound($request->path(), 404);
-        });
+                $e instanceof AuthorizationException =>
+                    ApiResponse::forbidden($e->getMessage() ?: trans('api.forbidden')),
 
-        $exceptions->render(function (MethodNotAllowedHttpException $e, \Illuminate\Http\Request $request) {
-            return ApiResponse::routeNotFound($request->path(), 405);
-        });
+                $e instanceof ModelNotFoundException =>
+                    ApiResponse::notFound(class_basename($e->getModel())),
 
-        $exceptions->render(function (TooManyRequestsHttpException $e) {
-            return ApiResponse::tooManyRequests('Too many requests. Please slow down.');
-        });
+                $e instanceof NotFoundHttpException =>
+                    ApiResponse::routeNotFound($request->path(), 404),
 
-        $exceptions->render(function (Throwable $e) {
-            return ApiResponse::serverError(
-                app()->isProduction() ? 'An unexpected error occurred.' : $e->getMessage()
-            );
+                $e instanceof MethodNotAllowedHttpException =>
+                    ApiResponse::routeNotFound($request->path(), 405),
+
+                $e instanceof TooManyRequestsHttpException =>
+                    ApiResponse::tooManyRequests(trans('api.too_many_requests')),
+
+                default =>
+                    ApiResponse::serverError(
+                        app()->isProduction()
+                            ? trans('api.server_error')
+                            : $e->getMessage()
+                    ),
+            };
         });
 
     })->create();
