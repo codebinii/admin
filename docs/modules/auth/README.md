@@ -26,7 +26,8 @@ app/
 │   │   ├── SendWhatsAppOtpController.php
 │   │   ├── VerifyWhatsAppController.php
 │   │   ├── SendPhoneOtpController.php
-│   │   └── VerifyPhoneController.php
+│   │   ├── VerifyPhoneController.php
+│   │   └── RefreshTokenController.php
 │   ├── Requests/Auth/
 │   │   ├── LoginRequest.php
 │   │   ├── RegisterRequest.php
@@ -136,6 +137,14 @@ Si cambia el email, resetea `email_verified_at` y reenvía verificación.
 Cambia la contraseña del usuario autenticado.
 
 **Body:** `{ "current_password", "password", "password_confirmation" }`
+
+---
+
+### POST `/api/auth/token/refresh` 🔒
+
+Rota el token actual: revoca el existente y emite uno nuevo con el mismo `device_name`.
+
+**Response `200`:** `{ "data": { "token": "3|newtoken..." } }`
 
 ---
 

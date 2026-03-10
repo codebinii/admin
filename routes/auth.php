@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\RefreshTokenController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutAllController;
@@ -42,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::put('/password',                      ChangePasswordController::class);
     Route::post('/logout',                       LogoutController::class);
     Route::post('/logout-all',                   LogoutAllController::class);
+    Route::post('/token/refresh',                RefreshTokenController::class);
     Route::post('/email/resend', ResendVerificationController::class)
         ->middleware('throttle:auth.email.resend');
 

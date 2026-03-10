@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Http\Resources\Auth\UserResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\Auth\AuthService;
+use App\Services\Auth\PhoneVerificationService;
 use App\Services\Auth\WhatsAppVerificationService;
 use Illuminate\Http\JsonResponse;
 
@@ -17,6 +18,7 @@ final class UpdateProfileController extends Controller
     public function __construct(
         private readonly AuthService $authService,
         private readonly WhatsAppVerificationService $whatsAppService,
+        private readonly PhoneVerificationService $phoneService,
     ) {}
 
     public function __invoke(UpdateProfileRequest $request): JsonResponse
@@ -24,6 +26,8 @@ final class UpdateProfileController extends Controller
         $currentUser     = $request->user();
         $whatsappChanged = $request->filled('whatsapp')
             && $request->input('whatsapp') !== $currentUser->whatsapp;
+        $phoneChanged    = $request->filled('phone')
+            && $request->input('phone') !== $currentUser->phone;
 
         $user = $this->authService->updateProfile(
             $currentUser,
@@ -32,6 +36,10 @@ final class UpdateProfileController extends Controller
 
         if ($whatsappChanged) {
             $this->whatsAppService->clearResendLock($user);
+        }
+
+        if ($phoneChanged) {
+            $this->phoneService->clearResendLock($user);
         }
 
         return ApiResponse::ok(

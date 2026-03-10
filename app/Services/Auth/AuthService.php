@@ -56,6 +56,7 @@ final class AuthService
     {
         $emailChanged    = isset($data['email'])    && $data['email']    !== $user->email;
         $whatsappChanged = isset($data['whatsapp']) && $data['whatsapp'] !== $user->whatsapp;
+        $phoneChanged    = isset($data['phone'])    && $data['phone']    !== $user->phone;
 
         $user->fill($data);
 
@@ -65,6 +66,10 @@ final class AuthService
 
         if ($whatsappChanged) {
             $user->whatsapp_verified_at = null;
+        }
+
+        if ($phoneChanged) {
+            $user->phone_verified_at = null;
         }
 
         $user->save();
