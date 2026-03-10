@@ -10,13 +10,15 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Saas\Empresa;
 use App\Models\Saas\EmpresaApiKey;
 use App\Services\Saas\ApiKeyService;
+use App\Services\Saas\SaasAuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class ApiKeyController extends Controller
 {
     public function __construct(
-        private readonly ApiKeyService $apiKeyService,
+        private readonly ApiKeyService    $apiKeyService,
+        private readonly SaasAuditService $audit,
     ) {}
 
     /**
@@ -28,6 +30,12 @@ final class ApiKeyController extends Controller
         $nombre = $request->string('nombre')->toString() ?: null;
 
         ['plain_key' => $plainKey, 'model' => $model] = $this->apiKeyService->generate($empresa, $nombre);
+
+        $this->audit->log(SaasAuditService::KEY_GENERATED, [
+            'key_id'     => $model->id,
+            'key_prefix' => $model->key_prefix,
+            'nombre'     => $model->nombre,
+        ], $empresa->id);
 
         return ApiResponse::created([
             'key'  => $plainKey,
@@ -43,6 +51,12 @@ final class ApiKeyController extends Controller
         if ($key->empresa_id !== $empresa->id) {
             return ApiResponse::notFound('ApiKey');
         }
+
+        $this->audit->log(SaasAuditService::KEY_REVOKED, [
+            'key_id'     => $key->id,
+            'key_prefix' => $key->key_prefix,
+            'nombre'     => $key->nombre,
+        ], $empresa->id);
 
         $this->apiKeyService->revoke($key);
 

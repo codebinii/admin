@@ -12,8 +12,9 @@ use Illuminate\Support\Facades\DB;
 
 final class ModuloService
 {
-    private const CACHE_TTL     = 120; // minutes, fallback safety net
-    private const CACHE_MODULES = 'saas_modules:';
+    private const CACHE_TTL         = 120; // minutes, fallback safety net
+    private const CACHE_MODULES     = 'saas_modules:';
+    private const CACHE_VERSION_KEY = 'saas_modules:version';
 
     /**
      * Returns the list of active module slugs (nombre_modulo) for an empresa.
@@ -22,7 +23,7 @@ final class ModuloService
     public function getActiveModules(int|string $empresaId): array
     {
         return Cache::remember(
-            self::CACHE_MODULES . $empresaId,
+            $this->moduleCacheKey($empresaId),
             now()->addMinutes(self::CACHE_TTL),
             fn () => DB::table('empresa_modulos')
                 ->join('04modulos', '04modulos.id', '=', 'empresa_modulos.modulo_id')
@@ -64,20 +65,18 @@ final class ModuloService
 
     /**
      * Toggle a module globally (04modulos.activo).
-     * Clears cache for all empresas that have this module assigned.
+     * Uses version-bumping for O(1) cache invalidation — all empresa module caches
+     * become stale immediately without iterating over every empresa.
      * Returns the new activo state.
      */
     public function toggleGlobal(Modulo $modulo): bool
     {
         $newState = ! $modulo->activo;
 
-        // Update the shared table via DB (not via model save to respect read-only convention)
         DB::table('04modulos')->where('id', $modulo->id)->update(['activo' => $newState]);
 
-        // Invalidate cache for every empresa that has this module
-        EmpresaModulo::where('modulo_id', $modulo->id)
-            ->pluck('empresa_id')
-            ->each(fn ($id) => $this->invalidateCacheForEmpresa($id));
+        // Bump global version → all saas_modules:* caches become stale in O(1)
+        $this->bumpModulesVersion();
 
         return $newState;
     }
@@ -85,14 +84,13 @@ final class ModuloService
     /**
      * Sync the active modules for an empresa from a list of modulo IDs.
      * - IDs in $moduloIds  → upsert with activo = true
-     * - IDs previously set → set activo = false if not in $moduloIds
+     * - All other assigned IDs → activo = false
      * Cache is invalidated once after all changes.
      */
     public function syncForEmpresa(Empresa $empresa, array $moduloIds): void
     {
         $now = now();
 
-        // Activate or create rows for the provided IDs
         foreach ($moduloIds as $moduloId) {
             EmpresaModulo::updateOrCreate(
                 ['empresa_id' => $empresa->id, 'modulo_id' => $moduloId],
@@ -100,21 +98,34 @@ final class ModuloService
             );
         }
 
-        // Deactivate any previously assigned modules not in the list
-        if (! empty($moduloIds)) {
-            EmpresaModulo::where('empresa_id', $empresa->id)
-                ->whereNotIn('modulo_id', $moduloIds)
-                ->update(['activo' => false, 'updated_at' => $now]);
-        } else {
-            EmpresaModulo::where('empresa_id', $empresa->id)
-                ->update(['activo' => false, 'updated_at' => $now]);
-        }
+        EmpresaModulo::where('empresa_id', $empresa->id)
+            ->when(! empty($moduloIds), fn ($q) => $q->whereNotIn('modulo_id', $moduloIds))
+            ->update(['activo' => false, 'updated_at' => $now]);
 
         $this->invalidateCacheForEmpresa($empresa->id);
     }
 
     public function invalidateCacheForEmpresa(int|string $empresaId): void
     {
-        Cache::forget(self::CACHE_MODULES . $empresaId);
+        Cache::forget($this->moduleCacheKey($empresaId));
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Internals
+    // ──────────────────────────────────────────────────────────────
+
+    private function moduleCacheKey(int|string $empresaId): string
+    {
+        return self::CACHE_MODULES . $empresaId . ':' . $this->getModulesVersion();
+    }
+
+    private function getModulesVersion(): string
+    {
+        return Cache::get(self::CACHE_VERSION_KEY, '1');
+    }
+
+    private function bumpModulesVersion(): void
+    {
+        Cache::put(self::CACHE_VERSION_KEY, (string) time(), now()->addDays(30));
     }
 }

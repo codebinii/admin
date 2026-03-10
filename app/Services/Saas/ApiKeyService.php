@@ -23,8 +23,8 @@ final class ApiKeyService
      */
     public function generate(Empresa $empresa, ?string $nombre = null): array
     {
-        $plainKey  = 'sk_' . Str::random(40);
-        $prefix    = substr($plainKey, 0, self::KEY_PREFIX_LENGTH);
+        $plainKey = 'sk_' . Str::random(40);
+        $prefix   = substr($plainKey, 0, self::KEY_PREFIX_LENGTH);
 
         $model = EmpresaApiKey::create([
             'empresa_id'   => $empresa->id,
@@ -39,6 +39,7 @@ final class ApiKeyService
 
     /**
      * Resolve the empresa from a raw API key, with full auth checks.
+     * Cache stores empresa attributes to avoid a second DB round-trip on every request.
      * Returns null when key is invalid, inactive, or empresa is inactive.
      */
     public function resolveEmpresa(string $plainKey): ?Empresa
@@ -47,7 +48,6 @@ final class ApiKeyService
         $cached = Cache::get(self::CACHE_KEY . $prefix);
 
         if ($cached !== null) {
-            // Cache hit: verify hash and estado without DB lookup
             if (! hash_equals($cached['api_key_hash'], hash('sha256', $plainKey))) {
                 return null;
             }
@@ -56,10 +56,11 @@ final class ApiKeyService
                 return null;
             }
 
-            return Empresa::find($cached['empresa_id']);
+            // Reconstruct Empresa from cached attributes — no DB round-trip
+            return (new Empresa)->setRawAttributes($cached['empresa_attrs']);
         }
 
-        // Cache miss: query DB
+        // Cache miss: query DB once, store everything needed
         $apiKey = EmpresaApiKey::where('key_prefix', $prefix)
             ->where('activo', true)
             ->with('empresa')
@@ -77,9 +78,9 @@ final class ApiKeyService
 
         Cache::put(self::CACHE_KEY . $prefix, [
             'api_key_hash'   => $apiKey->api_key_hash,
-            'empresa_id'     => $empresa->id,
             'activo'         => $apiKey->activo,
             'empresa_activa' => (bool) $empresa->estado,
+            'empresa_attrs'  => $empresa->getAttributes(),
         ], now()->addMinutes(self::CACHE_TTL));
 
         if (! $empresa->estado) {

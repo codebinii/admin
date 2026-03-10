@@ -18,6 +18,10 @@ final class Empresa extends Model
 
     protected $guarded = ['*'];
 
+    protected $casts = [
+        'estado' => 'boolean',
+    ];
+
     public function apiKeys(): HasMany
     {
         return $this->hasMany(EmpresaApiKey::class, 'empresa_id');

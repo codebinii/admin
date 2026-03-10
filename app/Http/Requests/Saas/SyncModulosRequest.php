@@ -16,7 +16,7 @@ final class SyncModulosRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'modulos'   => ['present', 'array'],
+            'modulos'   => ['present', 'array', 'max:50'],
             'modulos.*' => ['integer', 'exists:04modulos,id'],
         ];
     }

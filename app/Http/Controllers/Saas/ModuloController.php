@@ -11,12 +11,14 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Saas\Empresa;
 use App\Models\Saas\Modulo;
 use App\Services\Saas\ModuloService;
+use App\Services\Saas\SaasAuditService;
 use Illuminate\Http\JsonResponse;
 
 final class ModuloController extends Controller
 {
     public function __construct(
-        private readonly ModuloService $moduloService,
+        private readonly ModuloService    $moduloService,
+        private readonly SaasAuditService $audit,
     ) {}
 
     /**
@@ -31,11 +33,17 @@ final class ModuloController extends Controller
 
     /**
      * Toggle a module globally — affects all empresas simultaneously.
-     * Cache is invalidated for every empresa that has this module assigned.
+     * Cache invalidated in O(1) via version bump.
      */
     public function toggleGlobal(Modulo $modulo): JsonResponse
     {
         $newState = $this->moduloService->toggleGlobal($modulo);
+
+        $this->audit->log(SaasAuditService::MODULE_GLOBAL_TOGGLED, [
+            'modulo_id'     => $modulo->id,
+            'nombre_modulo' => $modulo->nombre_modulo,
+            'activo'        => $newState,
+        ]);
 
         return ApiResponse::ok(
             data:    ['activo' => $newState],
@@ -50,7 +58,13 @@ final class ModuloController extends Controller
      */
     public function syncEmpresa(SyncModulosRequest $request, Empresa $empresa): JsonResponse
     {
-        $this->moduloService->syncForEmpresa($empresa, $request->input('modulos', []));
+        $moduloIds = $request->input('modulos', []);
+
+        $this->moduloService->syncForEmpresa($empresa, $moduloIds);
+
+        $this->audit->log(SaasAuditService::MODULES_SYNCED, [
+            'modulos_activos' => $moduloIds,
+        ], $empresa->id);
 
         $empresa->load('modulos');
 
@@ -67,6 +81,12 @@ final class ModuloController extends Controller
     public function toggleEmpresa(Empresa $empresa, Modulo $modulo): JsonResponse
     {
         $newState = $this->moduloService->toggleForEmpresa($empresa, $modulo);
+
+        $this->audit->log(SaasAuditService::MODULE_TOGGLED, [
+            'modulo_id'     => $modulo->id,
+            'nombre_modulo' => $modulo->nombre_modulo,
+            'activo'        => $newState,
+        ], $empresa->id);
 
         return ApiResponse::ok(
             data:    ['activo' => $newState],

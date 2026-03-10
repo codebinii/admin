@@ -17,7 +17,7 @@ final class EmpresaResource extends JsonResource
             'nombre'       => $this->nombre,
             'sigla'        => $this->sigla,
             'pais'         => $this->pais,
-            'estado'       => (bool) $this->estado,
+            'estado'       => $this->estado,
             'email_admin'  => $this->email_admin,
             'no_celular'   => $this->no_celular,
             'created_at'   => $this->created_at,
