@@ -12,8 +12,11 @@ use Illuminate\Support\Facades\Http;
 
 final class WhatsAppVerificationService
 {
-    private const CACHE_PREFIX = 'whatsapp_otp:';
-    private const GRAPH_BASE   = 'https://graph.facebook.com';
+    private const CACHE_PREFIX        = 'whatsapp_otp:';
+    private const CACHE_CONFIG        = 'whatsapp_config';
+    private const CACHE_SUPPORT       = 'whatsapp_support_contact';
+    private const CACHE_CONFIG_TTL    = 60; // minutes
+    private const GRAPH_BASE          = 'https://graph.facebook.com';
 
     // ──────────────────────────────────────────────────────────────
     // Public API
@@ -26,21 +29,17 @@ final class WhatsAppVerificationService
      */
     public function sendOtp(User $user): int
     {
-        $config = ConfigDefecto::main();
+        $config = $this->getConfig();
         $otp    = $this->generateOtp();
         $ttl    = (int) $config->tiempo_otp;
 
         Cache::put($this->cacheKey($user->id), $otp, now()->addMinutes($ttl));
 
-        $supportContact = CanalSoporte::where('canal', 'whatsapp')
-            ->where('activo', true)
-            ->value('detalle') ?? '';
-
         $this->dispatchTemplate(
             config:         $config,
             to:             $this->normalizeNumber($user->whatsapp),
             otp:            $otp,
-            supportContact: preg_replace('/\s+/', '', $supportContact),
+            supportContact: $this->getSupportContact(),
         );
 
         return $ttl;
@@ -51,10 +50,10 @@ final class WhatsAppVerificationService
      */
     public function verifyOtp(User $user, string $code): bool
     {
-        $key   = $this->cacheKey($user->id);
+        $key    = $this->cacheKey($user->id);
         $stored = Cache::get($key);
 
-        if ($stored === null || (string) $stored !== $code) {
+        if ($stored === null || $stored !== $code) {
             return false;
         }
 
@@ -64,16 +63,11 @@ final class WhatsAppVerificationService
         return true;
     }
 
-    public function hasPendingOtp(User $user): bool
-    {
-        return Cache::has($this->cacheKey($user->id));
-    }
-
     // ──────────────────────────────────────────────────────────────
     // Internals
     // ──────────────────────────────────────────────────────────────
 
-    private function dispatchTemplate(ConfigDefecto $config, string $to, int $otp, string $supportContact): void
+    private function dispatchTemplate(ConfigDefecto $config, string $to, string $otp, string $supportContact): void
     {
         $url = sprintf(
             '%s/%s/%s/messages',
@@ -94,7 +88,7 @@ final class WhatsAppVerificationService
                         [
                             'type'       => 'body',
                             'parameters' => [
-                                ['type' => 'text', 'text' => (string) $otp],
+                                ['type' => 'text', 'text' => $otp],
                                 ['type' => 'text', 'text' => $supportContact],
                             ],
                         ],
@@ -103,7 +97,7 @@ final class WhatsAppVerificationService
                             'sub_type'   => 'url',
                             'index'      => '0',
                             'parameters' => [
-                                ['type' => 'text', 'text' => (string) $otp],
+                                ['type' => 'text', 'text' => $otp],
                             ],
                         ],
                     ],
@@ -118,9 +112,25 @@ final class WhatsAppVerificationService
         }
     }
 
-    private function generateOtp(): int
+    private function getConfig(): ConfigDefecto
     {
-        return random_int(100000, 999999);
+        return Cache::remember(self::CACHE_CONFIG, now()->addMinutes(self::CACHE_CONFIG_TTL), fn () => ConfigDefecto::main());
+    }
+
+    private function getSupportContact(): string
+    {
+        $raw = Cache::remember(
+            self::CACHE_SUPPORT,
+            now()->addMinutes(self::CACHE_CONFIG_TTL),
+            fn () => CanalSoporte::where('canal', 'whatsapp')->where('activo', true)->value('detalle') ?? '',
+        );
+
+        return preg_replace('/\s+/', '', $raw);
+    }
+
+    private function generateOtp(): string
+    {
+        return (string) random_int(100000, 999999);
     }
 
     private function cacheKey(int|string $userId): string

@@ -14,12 +14,6 @@ final class MeController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        if ($user === null) {
-            return ApiResponse::unauthorized(trans('api.unauthorized'));
-        }
-
-        return ApiResponse::ok(new UserResource($user));
+        return ApiResponse::ok(new UserResource($request->user()));
     }
 }

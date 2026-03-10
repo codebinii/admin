@@ -9,7 +9,6 @@ use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Responses\ApiResponse;
 use App\Services\Auth\AuthService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Password;
 
 final class ForgotPasswordController extends Controller
 {
@@ -19,12 +18,9 @@ final class ForgotPasswordController extends Controller
 
     public function __invoke(ForgotPasswordRequest $request): JsonResponse
     {
-        $status = $this->authService->sendPasswordResetLink($request->string('email')->toString());
+        // Always return 200 — never reveal whether the email is registered
+        $this->authService->sendPasswordResetLink($request->string('email')->toString());
 
-        if ($status === Password::RESET_LINK_SENT) {
-            return ApiResponse::ok(message: trans('api.password_reset_sent'));
-        }
-
-        return ApiResponse::badRequest(trans('api.password_reset_failed'));
+        return ApiResponse::ok(message: trans('api.password_reset_sent'));
     }
 }

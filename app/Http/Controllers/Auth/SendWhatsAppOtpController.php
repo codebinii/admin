@@ -31,7 +31,7 @@ final class SendWhatsAppOtpController extends Controller
         try {
             $ttl = $this->service->sendOtp($user);
         } catch (\RuntimeException $e) {
-            return ApiResponse::serverError($e->getMessage());
+            return ApiResponse::serverError($e->getMessage(), $e);
         }
 
         return ApiResponse::ok(

@@ -48,12 +48,17 @@ final class AuthService
 
     public function updateProfile(User $user, array $data): User
     {
-        $emailChanged = isset($data['email']) && $data['email'] !== $user->email;
+        $emailChanged    = isset($data['email'])    && $data['email']    !== $user->email;
+        $whatsappChanged = isset($data['whatsapp']) && $data['whatsapp'] !== $user->whatsapp;
 
         $user->fill($data);
 
         if ($emailChanged) {
             $user->email_verified_at = null;
+        }
+
+        if ($whatsappChanged) {
+            $user->whatsapp_verified_at = null;
         }
 
         $user->save();

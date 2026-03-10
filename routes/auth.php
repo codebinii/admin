@@ -42,6 +42,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
         ->middleware('throttle:6,1');
 
     // WhatsApp verification
-    Route::post('/whatsapp/send',   SendWhatsAppOtpController::class)->middleware('throttle:5,1');
-    Route::post('/whatsapp/verify', VerifyWhatsAppController::class);
+    Route::middleware('throttle:5,1')->group(function (): void {
+        Route::post('/whatsapp/send',   SendWhatsAppOtpController::class);
+        Route::post('/whatsapp/verify', VerifyWhatsAppController::class);
+    });
 });
