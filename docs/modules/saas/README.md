@@ -257,6 +257,88 @@ Elimina la key permanentemente. La app SaaS perderá acceso de inmediato.
 
 ---
 
+## 🖥️ Historial de auditoría
+
+### Consultar historial
+
+```
+GET /api/saas/audit
+```
+
+Devuelve el historial paginado de acciones administrativas. Útil para revisar y confrontar cambios con el cliente SaaS.
+
+**Query params (todos opcionales):**
+
+| Parámetro    | Tipo    | Descripción                              |
+|--------------|---------|------------------------------------------|
+| `empresa_id` | integer | Filtrar por empresa                      |
+| `accion`     | string  | Filtrar por tipo de acción               |
+| `desde`      | date    | Fecha inicio `YYYY-MM-DD`                |
+| `hasta`      | date    | Fecha fin `YYYY-MM-DD`                   |
+
+**Acciones posibles:**
+
+| `accion`               | Qué registra                                      |
+|------------------------|---------------------------------------------------|
+| `key_generated`        | Generación de nueva API key                       |
+| `key_revoked`          | Revocación de API key                             |
+| `module_toggled`       | Activación/desactivación de módulo por empresa    |
+| `modules_synced`       | Sincronización masiva de módulos para una empresa |
+| `module_global_toggled`| Cambio de estado global de un módulo              |
+
+**Ejemplo:** historial de una empresa en una fecha
+
+```
+GET /api/saas/audit?empresa_id=1&desde=2026-03-01&hasta=2026-03-09
+```
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "01jfx...",
+      "accion": "modules_synced",
+      "empresa_id": 1,
+      "usuario": {
+        "id": 1,
+        "name": "Admin",
+        "email": "admin@codebini.com"
+      },
+      "datos": {
+        "modulos_activos": [1, 3]
+      },
+      "created_at": "2026-03-09T22:37:00Z"
+    },
+    {
+      "id": "01jfy...",
+      "accion": "key_generated",
+      "empresa_id": 1,
+      "usuario": { "id": 1, "name": "Admin", "email": "admin@codebini.com" },
+      "datos": {
+        "key_id": "01jfz...",
+        "key_prefix": "sk_AbCdEf",
+        "nombre": "producción"
+      },
+      "created_at": "2026-03-09T22:30:00Z"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "total": 48,
+      "per_page": 50,
+      "current_page": 1,
+      "last_page": 1
+    }
+  }
+}
+```
+
+> Para acciones globales (`module_global_toggled`), `empresa_id` es `null` ya que el cambio afecta a todas las empresas.
+
+---
+
 ## 🖥️ Catálogo global de módulos
 
 ### Listar todos los módulos

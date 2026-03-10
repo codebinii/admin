@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Saas\ApiKeyController;
+use App\Http\Controllers\Saas\AuditLogController;
 use App\Http\Controllers\Saas\EmpresaController;
 use App\Http\Controllers\Saas\ModuloController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
     // API key management
     Route::post('/empresas/{empresa}/keys',          [ApiKeyController::class, 'store']);
     Route::delete('/empresas/{empresa}/keys/{key}',  [ApiKeyController::class, 'destroy']);
+
+    // Audit log
+    Route::get('/audit', AuditLogController::class);
 
     // Module management
     Route::get('/modulos',                                          [ModuloController::class, 'index']);
