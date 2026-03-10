@@ -192,6 +192,38 @@ Cada módulo es autocontenido con sus propias responsabilidades.
 - Foreign keys con cascadas apropiadas
 - Soft deletes cuando sea necesario
 
+---
+
+### ⚠️ CRÍTICO — DB Compartida: Tablas Preexistentes
+
+**Este proyecto se conecta a una base de datos que contiene tablas de otros sistemas.**
+
+**PROHIBIDO sin instrucción explícita del usuario:**
+- Modificar tablas no creadas por este proyecto
+- Ejecutar `migrate:fresh`, `migrate:rollback` sin especificar `--step` controlado
+- Crear migraciones que alteren (`ALTER`, `DROP`, `RENAME`) tablas ajenas
+- Crear seeders que escriban en tablas ajenas
+- Modificar, eliminar o actualizar modelos existentes del proyecto
+
+**Permitido únicamente:**
+- Crear nuevas tablas propias del proyecto mediante migraciones nuevas
+- Leer tablas ajenas con modelos de solo lectura si el usuario lo solicita
+- Modificar modelos/tablas propias **solo bajo instrucción explícita**
+
+**Comandos de migración seguros en este contexto:**
+```bash
+php artisan migrate                        # solo corre migraciones pendientes
+php artisan migrate --step=1               # una migración a la vez
+php artisan migrate:status                 # revisar estado sin ejecutar
+```
+
+**Estado actual del proyecto (tablas propias):**
+- `users` — autenticación base
+- `cache`, `jobs` — framework Laravel
+- `personal_access_tokens` — Sanctum
+
+---
+
 **CRÍTICO - Normalización de Campos Booleanos:**
 - **TODOS** los campos de estado (activo/inactivo, habilitado/deshabilitado, etc.) DEBEN almacenarse como **1 y 0**
 - Usar `->boolean()` en migraciones

@@ -32,3 +32,14 @@ See [`docs/DEVELOPMENT_RULES.md`](docs/DEVELOPMENT_RULES.md) for mandatory proje
 - Controllers → Services → Repositories separation
 - Boolean fields normalized with `NormalizesBooleans` trait
 - Commit workflow and session closure procedure
+
+## ⚠️ Shared Database — Critical Constraint
+
+This project connects to a database that contains **pre-existing tables from other systems**.
+
+- **NEVER** modify, drop, or alter tables not created by this project
+- **NEVER** run `migrate:fresh` or broad `migrate:rollback` — use `php artisan migrate` only
+- **NEVER** modify existing models or tables unless explicitly instructed by the user
+- Only create new tables via new migrations scoped to this project
+
+**Project-owned tables:** `users`, `cache`, `jobs`, `personal_access_tokens`
