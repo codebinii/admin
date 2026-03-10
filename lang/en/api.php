@@ -13,6 +13,7 @@ return [
     'no_content'      => 'No content.',
     'logged_in'       => 'Login successful.',
     'logged_out'      => 'Logged out successfully.',
+    'logged_out_all'  => 'All sessions closed successfully.',
     'registered'      => 'User registered successfully.',
 
     // Errors — RFC 7807

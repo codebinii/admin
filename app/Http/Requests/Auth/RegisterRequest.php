@@ -19,6 +19,8 @@ final class RegisterRequest extends FormRequest
             'name'        => ['required', 'string', 'max:255'],
             'email'       => ['required', 'email', 'unique:users,email'],
             'password'    => ['required', 'string', 'min:8', 'confirmed'],
+            'phone'       => ['sometimes', 'nullable', 'string', 'max:30'],
+            'whatsapp'    => ['sometimes', 'nullable', 'string', 'max:30'],
             'device_name' => ['sometimes', 'string', 'max:255'],
         ];
     }

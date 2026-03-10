@@ -24,12 +24,20 @@ final class AuthService
         return $user->createToken($deviceName)->plainTextToken;
     }
 
-    public function register(string $name, string $email, string $password, string $deviceName): array
-    {
+    public function register(
+        string $name,
+        string $email,
+        string $password,
+        string $deviceName,
+        ?string $phone = null,
+        ?string $whatsapp = null,
+    ): array {
         $user = User::create([
-            'name'     => $name,
-            'email'    => $email,
-            'password' => $password,
+            'name'      => $name,
+            'email'     => $email,
+            'password'  => $password,
+            'phone'     => $phone,
+            'whatsapp'  => $whatsapp,
         ]);
 
         $token = $user->createToken($deviceName)->plainTextToken;
@@ -40,5 +48,10 @@ final class AuthService
     public function logout(User $user): void
     {
         $user->currentAccessToken()->delete();
+    }
+
+    public function logoutAll(User $user): void
+    {
+        $user->tokens()->delete();
     }
 }

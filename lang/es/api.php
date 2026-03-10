@@ -13,6 +13,7 @@ return [
     'no_content'      => 'Sin contenido.',
     'logged_in'       => 'Inicio de sesión exitoso.',
     'logged_out'      => 'Sesión cerrada exitosamente.',
+    'logged_out_all'  => 'Todas las sesiones fueron cerradas exitosamente.',
     'registered'      => 'Usuario registrado exitosamente.',
 
     // Errors — RFC 7807

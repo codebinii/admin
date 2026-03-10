@@ -24,6 +24,8 @@ final class RegisterController extends Controller
             email:      $request->string('email')->toString(),
             password:   $request->string('password')->toString(),
             deviceName: $request->string('device_name', 'api')->toString(),
+            phone:      $request->filled('phone') ? $request->string('phone')->toString() : null,
+            whatsapp:   $request->filled('whatsapp') ? $request->string('whatsapp')->toString() : null,
         );
 
         return ApiResponse::created(
