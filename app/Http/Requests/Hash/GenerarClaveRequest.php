@@ -17,10 +17,10 @@ final class GenerarClaveRequest extends FormRequest
     {
         return [
             'longitud' => ['sometimes', 'integer', 'min:1', 'max:256'],
-            'numeros' => ['sometimes', 'boolean'],
-            'minusculas' => ['sometimes', 'boolean'],
-            'mayusculas' => ['sometimes', 'boolean'],
-            'especiales' => ['sometimes', 'boolean'],
+            'numeros' => ['sometimes', 'in:0,1,true,false'],
+            'minusculas' => ['sometimes', 'in:0,1,true,false'],
+            'mayusculas' => ['sometimes', 'in:0,1,true,false'],
+            'especiales' => ['sometimes', 'in:0,1,true,false'],
         ];
     }
 
