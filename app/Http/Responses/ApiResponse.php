@@ -123,9 +123,20 @@ final class ApiResponse
         return self::problem(429, 'Too Many Requests', $detail ?: self::t('too_many_requests'));
     }
 
-    public static function serverError(string $detail = ''): JsonResponse
+    public static function serverError(string $detail = '', ?\Throwable $exception = null): JsonResponse
     {
-        return self::problem(500, 'Internal Server Error', $detail ?: self::t('server_error'));
+        $code        = $exception ? ErrorCode::fromException($exception) : ErrorCode::UNEXPECTED;
+        $description = ErrorCode::describe($code);
+
+        return response()->json([
+            'success'     => false,
+            'status'      => 500,
+            'title'       => 'Internal Server Error',
+            'detail'      => $detail ?: self::t('server_error'),
+            'error_code'  => $code,
+            'description' => $description,
+            'support'     => self::t('server_error_support'),
+        ], 500);
     }
 
     public static function routeNotFound(string $path, int $status = 404): JsonResponse

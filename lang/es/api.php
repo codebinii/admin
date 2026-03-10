@@ -22,7 +22,8 @@ return [
     'invalid_credentials' => 'Credenciales inválidas.',
     'forbidden'       => 'No tienes permiso para realizar esta acción.',
     'not_found'       => ':model no encontrado.',
-    'server_error'    => 'Ocurrió un error inesperado.',
+    'server_error'         => 'Ocurrió un error inesperado.',
+    'server_error_support' => 'Por favor contacta soporte indicando el código error_code.',
     'too_many_requests' => 'Demasiadas solicitudes. Por favor espera un momento.',
     'validation_detail' => 'Los datos proporcionados no son válidos.',
 

@@ -22,7 +22,8 @@ return [
     'invalid_credentials' => 'Invalid credentials.',
     'forbidden'       => 'This action is unauthorized.',
     'not_found'       => ':model not found.',
-    'server_error'    => 'An unexpected error occurred.',
+    'server_error'         => 'An unexpected error occurred.',
+    'server_error_support' => 'Please contact support with the error_code provided.',
     'too_many_requests' => 'Too many requests. Please slow down.',
     'validation_detail' => 'The given data was invalid.',
 

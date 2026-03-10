@@ -20,7 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Pure API — never redirect unauthenticated requests to a login route.
+        // Returning null causes the Authenticate middleware to throw
+        // AuthenticationException directly instead of attempting a redirect.
+        $middleware->redirectGuestsTo(fn () => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
 
@@ -53,7 +56,8 @@ return Application::configure(basePath: dirname(__DIR__))
                     ApiResponse::serverError(
                         app()->isProduction()
                             ? trans('api.server_error')
-                            : $e->getMessage()
+                            : $e->getMessage(),
+                        $e
                     ),
             };
         });
