@@ -1,157 +1,380 @@
 # Módulo SaaS Access
 
-Control de acceso M2M para empresas clientes del SaaS. Gestiona API keys y módulos habilitados por empresa.
+Gestión de empresas clientes del SaaS: API keys de acceso y control de módulos habilitados por empresa.
+
+> **Para el desarrollador frontend/UX:** las secciones marcadas con 🖥️ son las relevantes para ti. Las demás son arquitectura interna.
 
 ---
 
-## Estructura
+## Base URL
 
 ```
-app/
-├── Http/
-│   ├── Controllers/Saas/
-│   │   ├── EmpresaController.php       ← index, show
-│   │   ├── ApiKeyController.php        ← store, destroy
-│   │   └── ModuloController.php        ← index, toggleGlobal, toggleEmpresa
-│   ├── Middleware/
-│   │   ├── ValidateSaasKey.php         ← autentica X-Api-Key
-│   │   └── RequireSaasModule.php       ← verifica módulo activo para la empresa
-│   └── Resources/Saas/
-│       ├── EmpresaResource.php
-│       ├── ModuloResource.php
-│       └── ApiKeyResource.php
-├── Models/Saas/
-│   ├── Empresa.php        ← solo lectura, tabla 01empresas
-│   ├── Modulo.php         ← solo lectura, tabla 04modulos
-│   ├── EmpresaApiKey.php  ← tabla empresa_api_keys (propia)
-│   └── EmpresaModulo.php  ← tabla empresa_modulos (propia)
-└── Services/Saas/
-    ├── ApiKeyService.php   ← generar, verificar, revocar + cache
-    └── ModuloService.php   ← toggle módulos + invalidación de cache
+https://{dominio}/api/saas
+```
 
-routes/saas.php
+Todos los endpoints de administración requieren el token del usuario admin:
+
+```
+Authorization: Bearer {token_del_admin}
+Content-Type: application/json
 ```
 
 ---
 
-## Tablas
+## 🖥️ Empresas
 
-### Propias (creadas por este proyecto)
-
-**`empresa_api_keys`**
-| Campo          | Tipo    | Notas                              |
-|----------------|---------|------------------------------------|
-| `id`           | ulid PK |                                    |
-| `empresa_id`   | bigint  | FK → `01empresas.id` ON DELETE CASCADE |
-| `key_prefix`   | varchar(10) | Primeros 8 chars, texto plano, búsqueda rápida |
-| `api_key_hash` | varchar(64) | SHA-256 de la key completa, nunca en plano |
-| `nombre`       | varchar | Descripción opcional (ej: "producción") |
-| `activo`       | boolean | Default true |
-
-**`empresa_modulos`**
-| Campo        | Tipo    | Notas                                    |
-|--------------|---------|------------------------------------------|
-| `empresa_id` | bigint  | FK → `01empresas.id`, PK compuesta       |
-| `modulo_id`  | bigint  | FK → `04modulos.id`, PK compuesta        |
-| `activo`     | boolean | Interruptor por empresa                  |
-
-### Compartidas (solo lectura)
-
-**`01empresas`** — clientes SaaS. `estado` controla si el cliente está activo.
-**`04modulos`** — catálogo global de módulos. `activo` es el interruptor global.
-
----
-
-## Control de acceso — dos niveles
+### Listar empresas
 
 ```
-módulo activo = 04modulos.activo = true
-              AND empresa_modulos.activo = true
+GET /api/saas/empresas
 ```
 
-Si el módulo global está apagado, ninguna empresa puede usarlo aunque tenga `activo = true` en su pivot.
+Devuelve lista paginada. Útil para el listado principal del panel.
 
----
-
-## Endpoints admin (requieren `Authorization: Bearer {admin_token}`)
-
-### `GET /api/saas/empresas`
-Lista paginada de empresas con conteo de keys activas.
-
-### `GET /api/saas/empresas/{empresa}`
-Detalle de la empresa con sus módulos (incluye `activo_empresa` del pivot) y sus API keys.
-
-### `POST /api/saas/empresas/{empresa}/keys`
-Genera una nueva API key. La key en plano se devuelve **una sola vez**.
-
-**Body:** `{ "nombre": "producción" }` *(opcional)*
-
-**Response `201`:**
+**Response `200`:**
 ```json
 {
-  "data": {
-    "key":  "sk_AbCdEfGhIjKlMnOpQrStUvWxYz12345678901234",
-    "meta": { "id": "...", "nombre": "producción", "key_prefix": "sk_AbCdEf", "activo": true }
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "cod_empresa": "EMP001",
+      "nombre": "Empresa Ejemplo S.A.S",
+      "sigla": "EE",
+      "pais": "CO",
+      "estado": true,
+      "email_admin": "admin@ejemplo.com",
+      "no_celular": "+57 300 000 0000",
+      "created_at": "2024-01-15T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "total": 42,
+      "per_page": 25,
+      "current_page": 1,
+      "last_page": 2
+    }
   }
 }
 ```
 
-### `DELETE /api/saas/empresas/{empresa}/keys/{key}`
-Revoca una API key. Acción permanente — requiere generar una nueva para restaurar acceso.
+---
 
-### `GET /api/saas/modulos`
-Lista todos los módulos del catálogo global con su estado `activo`.
+### Detalle de empresa
 
-### `PATCH /api/saas/modulos/{modulo}/toggle`
-Activa/desactiva un módulo globalmente. Invalida el cache de todas las empresas que tengan ese módulo asignado.
+```
+GET /api/saas/empresas/{id}
+```
 
-### `POST /api/saas/empresas/{empresa}/modulos/{modulo}/toggle`
-Activa/desactiva un módulo para una empresa específica. Crea el registro pivot si no existe.
+Devuelve la empresa con sus módulos asignados y sus API keys. Usar para cargar la pantalla de configuración de una empresa.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": {
+    "empresa": {
+      "id": 1,
+      "cod_empresa": "EMP001",
+      "nombre": "Empresa Ejemplo S.A.S",
+      "sigla": "EE",
+      "pais": "CO",
+      "estado": true,
+      "email_admin": "admin@ejemplo.com",
+      "no_celular": "+57 300 000 0000",
+      "created_at": "2024-01-15T10:00:00Z"
+    },
+    "modulos": [
+      {
+        "id": 1,
+        "nombre_modulo": "pdf",
+        "activo": true,
+        "activo_empresa": true
+      },
+      {
+        "id": 2,
+        "nombre_modulo": "facturacion",
+        "activo": true,
+        "activo_empresa": false
+      },
+      {
+        "id": 3,
+        "nombre_modulo": "reportes",
+        "activo": false,
+        "activo_empresa": true
+      }
+    ],
+    "keys": [
+      {
+        "id": "01jfx...",
+        "nombre": "producción",
+        "key_prefix": "sk_AbCdEf",
+        "activo": true,
+        "created_at": "2024-01-15T10:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+> **Nota sobre módulos:**
+> - `activo` = interruptor global (lo controla el súper admin, afecta a todas las empresas)
+> - `activo_empresa` = interruptor por empresa (lo configuras tú desde esta pantalla)
+> - Un módulo **funciona** solo cuando ambos están en `true`
+> - Si `activo = false`, el módulo aparece deshabilitado globalmente — muéstraselo al usuario como bloqueado
 
 ---
 
-## Uso en módulos SaaS
+## 🖥️ Gestión de módulos por empresa
 
-Proteger rutas que la app SaaS consume:
+### Guardar configuración de módulos *(recomendado)*
 
+```
+PUT /api/saas/empresas/{id}/modulos
+```
+
+Envía la lista completa de IDs de módulos que deben estar **activos** para esta empresa. Los que no aparezcan en la lista quedan desactivados.
+
+Diseñado para pantallas tipo "checklist" donde el usuario configura todo y presiona **Guardar**.
+
+**Body:**
+```json
+{
+  "modulos": [1, 3]
+}
+```
+
+> Para desactivar **todos** los módulos: enviar `"modulos": []`
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "Módulos de la empresa actualizados.",
+  "data": [
+    {
+      "id": 1,
+      "nombre_modulo": "pdf",
+      "activo": true,
+      "activo_empresa": true
+    },
+    {
+      "id": 2,
+      "nombre_modulo": "facturacion",
+      "activo": true,
+      "activo_empresa": false
+    }
+  ]
+}
+```
+
+**Flujo UX sugerido:**
+```
+1. Cargar GET /empresas/{id}  →  obtener modulos con activo_empresa actual
+2. Mostrar lista de módulos con toggles/checkboxes
+3. Usuario activa/desactiva localmente (sin llamadas al API)
+4. Usuario presiona "Guardar"
+5. Enviar PUT /empresas/{id}/modulos con los IDs activos
+6. Actualizar UI con la respuesta
+```
+
+---
+
+### Toggle rápido de un módulo *(acción inmediata)*
+
+```
+POST /api/saas/empresas/{empresa_id}/modulos/{modulo_id}/toggle
+```
+
+Cambia el estado de un módulo específico sin necesidad de botón de guardar. Útil para listas con switches que responden inmediatamente.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "Estado del módulo actualizado.",
+  "data": { "activo": true }
+}
+```
+
+---
+
+## 🖥️ Gestión de API Keys
+
+La API key es la credencial que la app SaaS usa para conectarse a esta plataforma. **Solo se muestra una vez al generarla** — si se pierde, hay que revocar y generar una nueva.
+
+### Generar API key
+
+```
+POST /api/saas/empresas/{id}/keys
+```
+
+**Body** *(opcional)*:
+```json
+{ "nombre": "producción" }
+```
+
+**Response `201`:**
+```json
+{
+  "success": true,
+  "message": "API key generada exitosamente. Guárdala — no se mostrará de nuevo.",
+  "data": {
+    "key": "sk_AbCdEfGhIjKlMnOpQrStUvWxYz12345678901234",
+    "meta": {
+      "id": "01jfx...",
+      "nombre": "producción",
+      "key_prefix": "sk_AbCdEf",
+      "activo": true,
+      "created_at": "2024-03-09T22:37:00Z"
+    }
+  }
+}
+```
+
+> ⚠️ **Mostrar el valor de `key` en un modal con opción de copiar.** Una vez cerrado, no es recuperable. Solo `key_prefix` queda visible para identificar la key en el listado.
+
+---
+
+### Revocar API key
+
+```
+DELETE /api/saas/empresas/{empresa_id}/keys/{key_id}
+```
+
+Elimina la key permanentemente. La app SaaS perderá acceso de inmediato.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "API key revocada exitosamente."
+}
+```
+
+> Pedir confirmación al usuario antes de llamar este endpoint.
+
+---
+
+## 🖥️ Catálogo global de módulos
+
+### Listar todos los módulos
+
+```
+GET /api/saas/modulos
+```
+
+Devuelve el catálogo completo. Usar para mostrar el estado global antes de configurar empresas.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": [
+    { "id": 1, "nombre_modulo": "pdf",         "activo": true,  "created_at": "..." },
+    { "id": 2, "nombre_modulo": "facturacion",  "activo": true,  "created_at": "..." },
+    { "id": 3, "nombre_modulo": "reportes",     "activo": false, "created_at": "..." }
+  ]
+}
+```
+
+---
+
+### Toggle global de un módulo *(súper admin)*
+
+```
+PATCH /api/saas/modulos/{id}/toggle
+```
+
+Apaga o enciende un módulo para **todas las empresas** simultáneamente. Usar con precaución.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "Estado del módulo actualizado.",
+  "data": { "activo": false }
+}
+```
+
+> Si `activo` pasa a `false`, el módulo queda bloqueado para todas las empresas aunque tengan `activo_empresa: true`. Recomendable mostrar una advertencia antes de confirmar.
+
+---
+
+## 🖥️ Códigos de error comunes
+
+| Código | Cuándo ocurre |
+|--------|---------------|
+| `401`  | Token de admin ausente o inválido |
+| `403`  | Módulo deshabilitado para la empresa (en rutas SaaS) |
+| `404`  | Empresa, módulo o key no encontrada |
+| `422`  | Validación fallida — revisar campo `errors` en la respuesta |
+
+**Estructura de error:**
+```json
+{
+  "success": false,
+  "status": 422,
+  "title": "Unprocessable Entity",
+  "detail": "Los datos proporcionados no son válidos.",
+  "errors": {
+    "modulos.0": ["El campo modulos.0 debe existir en 04modulos."]
+  }
+}
+```
+
+---
+
+## Arquitectura interna *(para el backend)*
+
+### Tablas propias
+
+**`empresa_api_keys`** — credenciales M2M
+| Campo          | Tipo        | Notas                                                   |
+|----------------|-------------|---------------------------------------------------------|
+| `id`           | ulid PK     |                                                         |
+| `empresa_id`   | bigint      | FK → `01empresas.id`                                    |
+| `key_prefix`   | varchar(10) | Primeros 8 chars en texto plano para lookup rápido      |
+| `api_key_hash` | varchar(64) | SHA-256 de la key completa — nunca se guarda en plano   |
+| `nombre`       | varchar     | Descripción (ej: "producción", "staging")               |
+| `activo`       | boolean     |                                                         |
+
+**`empresa_modulos`** — módulos asignados por empresa
+| Campo        | Tipo    | Notas                              |
+|--------------|---------|------------------------------------|
+| `empresa_id` | bigint  | FK → `01empresas.id`, PK compuesta |
+| `modulo_id`  | bigint  | FK → `04modulos.id`, PK compuesta  |
+| `activo`     | boolean | Interruptor por empresa            |
+
+### Tablas compartidas (solo lectura)
+
+- **`01empresas`** — clientes SaaS. `estado` controla acceso global.
+- **`04modulos`** — catálogo de módulos. `activo` es el interruptor global.
+
+### Cache
+
+| Key                         | Contenido                        | Se invalida cuando                           |
+|-----------------------------|----------------------------------|----------------------------------------------|
+| `saas_key:{key_prefix}`     | hash + empresa_id + activo flags | Se genera o revoca la key                    |
+| `saas_modules:{empresa_id}` | array de slugs activos           | Se sincroniza, toggle por empresa o global   |
+
+TTL fallback: 120 min. Invalidación explícita e inmediata ante cualquier cambio.
+
+### Flujo de autenticación M2M
+
+```
+App SaaS → POST /api/saas/{modulo}/...
+           Header: X-Api-Key: sk_AbCdEf...
+
+1. ValidateSaasKey   → verifica key + empresa.estado
+2. RequireSaasModule → verifica módulo activo global + por empresa
+3. Controller        → procesa la request
+```
+
+Proteger rutas de módulos SaaS:
 ```php
-// routes/pdf.php (ejemplo de futuro módulo)
 Route::middleware(['saas.auth', 'saas.module:pdf'])->group(function () {
     Route::post('/generate', GeneratePdfController::class);
 });
-```
-
-Header requerido: `X-Api-Key: sk_AbCdEfGhIj...`
-
----
-
-## Cache
-
-| Cache key                   | Contenido                          | Se invalida cuando                                |
-|-----------------------------|------------------------------------|---------------------------------------------------|
-| `saas_key:{key_prefix}`     | hash + empresa_id + activo flags   | Se genera o revoca la key / cambia estado empresa |
-| `saas_modules:{empresa_id}` | array de `nombre_modulo` activos   | Se toggle módulo por empresa o globalmente        |
-
-TTL fallback: 120 minutos. La invalidación es explícita e inmediata.
-
----
-
-## Flujo de autenticación M2M
-
-```
-POST /api/saas/pdf/generate
-X-Api-Key: sk_AbCdEf...
-
-1. ValidateSaasKey
-   → extrae key_prefix (8 chars)
-   → busca en cache saas_key:{prefix}
-   → verifica sha256(raw_key) == api_key_hash
-   → verifica empresa.estado = true
-   → inyecta $empresa en request attributes
-
-2. RequireSaasModule('pdf')
-   → carga saas_modules:{empresa_id} del cache
-   → verifica 'pdf' ∈ módulos activos
-
-3. Ejecuta el controller del módulo
 ```
