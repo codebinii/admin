@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Saas\ApiKeyController;
 use App\Http\Controllers\Saas\AuditLogController;
+use App\Http\Controllers\Saas\DbStatusController;
 use App\Http\Controllers\Saas\EmpresaController;
 use App\Http\Controllers\Saas\ModuloController;
 use Illuminate\Support\Facades\Route;
 
 // Admin management routes — require authenticated admin user
 Route::middleware('auth:sanctum')->group(function (): void {
+
+    // DB connection status
+    Route::get('/db-status', DbStatusController::class);
 
     // Empresa listing, detail & estado toggle
     Route::get('/empresas',                        [EmpresaController::class, 'index']);
