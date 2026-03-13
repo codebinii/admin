@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ForceJsonResponse;
+use App\Http\Middleware\RequestTracingMiddleware;
 use App\Http\Middleware\RequireSaasModule;
 use App\Http\Middleware\ValidateSaasKey;
 use App\Http\Responses\ApiResponse;
@@ -24,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Always respond with JSON — prevents HTML error pages on missing Accept header
-        $middleware->api(prepend: [ForceJsonResponse::class]);
+        $middleware->api(prepend: [ForceJsonResponse::class, RequestTracingMiddleware::class]);
 
         // Pure API — never redirect unauthenticated requests to a login route.
         $middleware->redirectGuestsTo(fn () => null);

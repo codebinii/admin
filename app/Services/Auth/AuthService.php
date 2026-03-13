@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Auth;
 
 use App\Models\User;
+use App\Support\AppLog;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -20,8 +21,15 @@ final class AuthService
         $user = User::where('email', $email)->first();
 
         if (! $user || ! Hash::check($password, $user->password)) {
+            AppLog::auth('auth.login.failed', ['email' => $email, 'device' => $deviceName]);
             throw new AuthenticationException('Invalid credentials.');
         }
+
+        AppLog::auth('auth.login.success', [
+            'user_id' => $user->id,
+            'email'   => $email,
+            'device'  => $deviceName,
+        ]);
 
         return [
             'user'  => $user,
@@ -48,6 +56,12 @@ final class AuthService
         $user->sendEmailVerificationNotification();
 
         $token = $user->createToken($deviceName)->plainTextToken;
+
+        AppLog::auth('auth.register', [
+            'user_id' => $user->id,
+            'email'   => $email,
+            'device'  => $deviceName,
+        ]);
 
         return ['user' => $user, 'token' => $token];
     }
@@ -89,6 +103,7 @@ final class AuthService
         }
 
         $user->update(['password' => $newPassword]);
+        AppLog::auth('auth.password.changed', ['user_id' => $user->id]);
     }
 
     public function sendVerification(User $user): void
@@ -132,10 +147,12 @@ final class AuthService
     public function logout(User $user): void
     {
         $user->currentAccessToken()->delete();
+        AppLog::auth('auth.logout', ['user_id' => $user->id]);
     }
 
     public function logoutAll(User $user): void
     {
         $user->tokens()->delete();
+        AppLog::auth('auth.logout_all', ['user_id' => $user->id]);
     }
 }

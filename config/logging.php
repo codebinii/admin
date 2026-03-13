@@ -20,6 +20,8 @@ return [
 
     'default' => env('LOG_CHANNEL', 'stack'),
 
+    'trace_enabled' => env('LOG_TRACE_ENABLED', true),
+
     /*
     |--------------------------------------------------------------------------
     | Deprecations Log Channel
@@ -125,6 +127,30 @@ return [
 
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
+        ],
+
+        'requests' => [
+            'driver'               => 'daily',
+            'path'                 => storage_path('logs/requests/laravel.log'),
+            'level'                => 'debug',
+            'days'                 => env('LOG_TRACE_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
+        'auth_events' => [
+            'driver'               => 'daily',
+            'path'                 => storage_path('logs/auth/laravel.log'),
+            'level'                => 'debug',
+            'days'                 => env('LOG_TRACE_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
+        'app_events' => [
+            'driver'               => 'daily',
+            'path'                 => storage_path('logs/app/laravel.log'),
+            'level'                => 'debug',
+            'days'                 => env('LOG_TRACE_DAYS', 30),
+            'replace_placeholders' => true,
         ],
 
     ],
